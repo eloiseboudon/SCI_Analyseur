@@ -10,7 +10,8 @@ export default function App() {
   const handleAnalyze = async (data: any) => {
     setLoading(true);
     try {
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/analyze-sci`;
+      const baseUrl = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:5000';
+      const apiUrl = `${baseUrl.replace(/\/$/, '')}/api/analyze`;
 
       console.log('Envoi des données:', data);
 
@@ -18,7 +19,6 @@ export default function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify(data),
       });
@@ -31,7 +31,7 @@ export default function App() {
 
       const result = await response.json();
       console.log('Résultats reçus:', result);
-      setResults(result);
+      setResults({ ...result, apiBaseUrl: baseUrl.replace(/\/$/, '') });
     } catch (error: any) {
       console.error('Erreur complète:', error);
       setResults({

@@ -12,6 +12,7 @@ type TabType = 'synthese' | 'ai_analysis' | 'compte_resultat' | 'tresorerie' | '
 
 export function DarkResultsTabs({ data, onBack }: DarkResultsTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>('synthese');
+  const [downloading, setDownloading] = useState(false);
 
   if (!data || !data.success) {
     return (
@@ -34,6 +35,34 @@ export function DarkResultsTabs({ data, onBack }: DarkResultsTabsProps) {
   }
 
   const { indicateurs, projection } = data;
+
+  const handleDownload = async () => {
+    if (!data?.excel_url || !data?.apiBaseUrl) {
+      return;
+    }
+
+    try {
+      setDownloading(true);
+      const response = await fetch(`${data.apiBaseUrl}${data.excel_url}`);
+      if (!response.ok) {
+        throw new Error(`Erreur téléchargement ${response.status}`);
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const fileName = data?.excel_url?.split('/').pop() || 'rapport_sci.xlsx';
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erreur export Excel:', error);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (!projection || projection.length === 0) {
     return (
@@ -78,9 +107,13 @@ export function DarkResultsTabs({ data, onBack }: DarkResultsTabsProps) {
                 <p className="text-xs text-slate-500">Analyse professionnelle • 30 ans</p>
               </div>
             </div>
-            <button className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-zinc-900 to-black border-gold text-white rounded-xl hover:from-emerald-500 hover:to-cyan-500 transition-all border border-emerald-600/40 font-semibold">
+            <button
+              onClick={handleDownload}
+              disabled={downloading}
+              className={`flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-zinc-900 to-black border-gold text-white rounded-xl transition-all border border-emerald-600/40 font-semibold ${downloading ? 'opacity-60 cursor-not-allowed' : 'hover:from-emerald-500 hover:to-cyan-500'}`}
+            >
               <Download className="w-4 h-4" />
-              Export PDF
+              {downloading ? 'Téléchargement…' : 'Export Excel'}
             </button>
           </div>
         </div>
