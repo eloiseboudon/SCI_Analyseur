@@ -1,14 +1,19 @@
 """Flask application exposing SCI analysis via HTTP API."""
 from __future__ import annotations
 
+import os
+import uuid
+from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
-import uuid
 
+import pandas as pd
 from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
-import pandas as pd
+from sqlalchemy import JSON, DateTime, String, create_engine, select
+from sqlalchemy.orm import Mapped, declarative_base, mapped_column, sessionmaker
 
 
 app = Flask(__name__)
@@ -19,6 +24,76 @@ REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 # In-memory mapping between a generated report identifier and its Excel path
 REPORT_STORAGE: Dict[str, Path] = {}
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL environment variable must be set with a PostgreSQL connection string."
+    )
+
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, future=True)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False, future=True)
+Base = declarative_base()
+
+
+class Project(Base):
+    __tablename__ = "projects"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    nom_sci: Mapped[str] = mapped_column(String(255), nullable=False)
+    payload: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
+    indicateurs: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
+    projection: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=False)
+    excel_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+try:
+    Base.metadata.create_all(engine)
+except Exception as exc:  # pragma: no cover - defensive startup guard
+    raise RuntimeError("Impossible d'initialiser la base de données PostgreSQL") from exc
+
+
+@contextmanager
+def session_scope():
+    session = SessionLocal()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+def serialize_project(project: Project, *, include_payload: bool = False, include_projection: bool = False) -> Dict[str, Any]:
+    data: Dict[str, Any] = {
+        "id": project.id,
+        "nom_sci": project.nom_sci,
+        "created_at": project.created_at.isoformat() if project.created_at else None,
+        "updated_at": project.updated_at.isoformat() if project.updated_at else None,
+        "excel_url": f"/api/projects/{project.id}/export" if project.excel_filename else None,
+        "indicateurs": project.indicateurs,
+        "annee_creation": project.payload.get("annee_creation") if isinstance(project.payload, dict) else None,
+        "nombre_associes": project.payload.get("nombre_associes") if isinstance(project.payload, dict) else None,
+    }
+
+    if include_payload:
+        data["payload"] = project.payload
+
+    if include_projection:
+        data["projection"] = project.projection
+
+    return data
+
+
+def delete_excel_file(filename: str | None) -> None:
+    if not filename:
+        return
+    path = REPORTS_DIR / filename
+    if path.exists():
+        path.unlink(missing_ok=True)
 
 
 @dataclass
@@ -325,11 +400,6 @@ def analyse_projet(payload: Dict[str, Any]) -> Dict[str, Any]:
         "delai_rentabilite": delai_rentabilite if delai_rentabilite is not None else ">" + str(projection_years),
     }
 
-    report_id = str(uuid.uuid4())
-    excel_path = REPORTS_DIR / f"rapport_{report_id}.xlsx"
-    generate_excel_report(indicateurs, projection, excel_path)
-    REPORT_STORAGE[report_id] = excel_path
-
     return {
         "success": True,
         "nom_sci": payload.get("nom_sci", "SCI"),
@@ -337,8 +407,6 @@ def analyse_projet(payload: Dict[str, Any]) -> Dict[str, Any]:
         "nombre_associes": nombre_associes,
         "indicateurs": indicateurs,
         "projection": projection,
-        "report_id": report_id,
-        "excel_url": f"/api/reports/{report_id}/excel",
     }
 
 
@@ -362,7 +430,162 @@ def analyze_endpoint() -> Tuple[str, int]:
     except Exception as exc:  # pragma: no cover - defensive error handling
         return jsonify({"success": False, "error": str(exc)}), 500
 
+    report_id = str(uuid.uuid4())
+    excel_path = REPORTS_DIR / f"rapport_{report_id}.xlsx"
+    generate_excel_report(result["indicateurs"], result["projection"], excel_path)
+    REPORT_STORAGE[report_id] = excel_path
+
+    result = {
+        **result,
+        "report_id": report_id,
+        "excel_url": f"/api/reports/{report_id}/excel",
+    }
+
     return jsonify(result), 200
+
+
+@app.get("/api/projects")
+def list_projects() -> Tuple[str, int]:
+    with session_scope() as session:
+        result = session.execute(select(Project).order_by(Project.updated_at.desc()))
+        projects = [serialize_project(row[0]) for row in result]
+
+    return jsonify({"success": True, "projects": projects}), 200
+
+
+@app.post("/api/projects")
+def create_project() -> Tuple[str, int]:
+    try:
+        payload = request.get_json(force=True)
+    except Exception:
+        return jsonify({"success": False, "error": "Requête JSON invalide"}), 400
+
+    if not isinstance(payload, dict):
+        return jsonify({"success": False, "error": "Format de données invalide"}), 400
+
+    try:
+        analysis = analyse_projet(payload)
+    except Exception as exc:
+        return jsonify({"success": False, "error": str(exc)}), 500
+
+    project_id = str(uuid.uuid4())
+    excel_filename = f"projet_{project_id}.xlsx"
+    generate_excel_report(analysis["indicateurs"], analysis["projection"], REPORTS_DIR / excel_filename)
+
+    with session_scope() as session:
+        project = Project(
+            id=project_id,
+            nom_sci=analysis.get("nom_sci") or payload.get("nom_sci") or "SCI",
+            payload=payload,
+            indicateurs=analysis["indicateurs"],
+            projection=analysis["projection"],
+            excel_filename=excel_filename,
+        )
+        session.add(project)
+        session.flush()
+
+    response = {
+        **analysis,
+        "project_id": project_id,
+        "excel_url": f"/api/projects/{project_id}/export",
+        "project": serialize_project(project, include_payload=True, include_projection=True),
+    }
+
+    return jsonify(response), 201
+
+
+@app.get("/api/projects/<project_id>")
+def get_project(project_id: str) -> Tuple[str, int]:
+    with session_scope() as session:
+        project = session.get(Project, project_id)
+
+    if not project:
+        return jsonify({"success": False, "error": "Projet introuvable"}), 404
+
+    response = {
+        "success": True,
+        **serialize_project(project, include_payload=True, include_projection=True),
+    }
+
+    return jsonify(response), 200
+
+
+@app.put("/api/projects/<project_id>")
+def update_project(project_id: str) -> Tuple[str, int]:
+    try:
+        payload = request.get_json(force=True)
+    except Exception:
+        return jsonify({"success": False, "error": "Requête JSON invalide"}), 400
+
+    if not isinstance(payload, dict):
+        return jsonify({"success": False, "error": "Format de données invalide"}), 400
+
+    with session_scope() as session:
+        project = session.get(Project, project_id)
+        if not project:
+            return jsonify({"success": False, "error": "Projet introuvable"}), 404
+
+        try:
+            analysis = analyse_projet(payload)
+        except Exception as exc:
+            session.rollback()
+            return jsonify({"success": False, "error": str(exc)}), 500
+
+        delete_excel_file(project.excel_filename)
+
+        excel_filename = f"projet_{project_id}.xlsx"
+        generate_excel_report(analysis["indicateurs"], analysis["projection"], REPORTS_DIR / excel_filename)
+
+        project.nom_sci = analysis.get("nom_sci") or payload.get("nom_sci") or project.nom_sci
+        project.payload = payload
+        project.indicateurs = analysis["indicateurs"]
+        project.projection = analysis["projection"]
+        project.excel_filename = excel_filename
+        project.updated_at = datetime.utcnow()
+        session.add(project)
+        session.flush()
+
+    response = {
+        **analysis,
+        "project_id": project_id,
+        "excel_url": f"/api/projects/{project_id}/export",
+        "project": serialize_project(project, include_payload=True, include_projection=True),
+    }
+
+    return jsonify(response), 200
+
+
+@app.delete("/api/projects/<project_id>")
+def delete_project(project_id: str) -> Tuple[str, int]:
+    with session_scope() as session:
+        project = session.get(Project, project_id)
+        if not project:
+            return jsonify({"success": False, "error": "Projet introuvable"}), 404
+
+        delete_excel_file(project.excel_filename)
+        session.delete(project)
+
+    return jsonify({"success": True}), 200
+
+
+@app.get("/api/projects/<project_id>/export")
+def export_project_excel(project_id: str):
+    with session_scope() as session:
+        project = session.get(Project, project_id)
+
+    if not project or not project.excel_filename:
+        return jsonify({"success": False, "error": "Rapport introuvable"}), 404
+
+    excel_path = REPORTS_DIR / project.excel_filename
+    if not excel_path.exists():
+        return jsonify({"success": False, "error": "Rapport introuvable"}), 404
+
+    return send_file(
+        excel_path,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=excel_path.name,
+    )
 
 
 @app.get("/api/reports/<report_id>/excel")

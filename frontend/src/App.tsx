@@ -1,51 +1,440 @@
-import { useState } from 'react';
-import { Zap, TrendingUp } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Zap,
+  TrendingUp,
+  PlusCircle,
+  RefreshCw,
+  Eye,
+  Edit2,
+  Download,
+  Trash2,
+} from 'lucide-react';
 import { SCIForm } from './components/SCIForm';
 import { DarkResultsTabs } from './components/DarkResultsTabs';
 
+type ViewState = 'list' | 'form' | 'results';
+
+interface ProjectSummary {
+  id: string;
+  nom_sci: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+  excel_url?: string | null;
+  indicateurs?: Record<string, any> | null;
+  annee_creation?: number | null;
+  nombre_associes?: number | null;
+}
+
+interface ProjectDetail extends ProjectSummary {
+  payload?: any;
+  projection?: any[];
+}
+
+const formatDate = (value?: string | null) => {
+  if (!value) {
+    return '—';
+  }
+  try {
+    return new Date(value).toLocaleString('fr-FR');
+  } catch (error) {
+    return value;
+  }
+};
+
+const downloadExcelFile = async (url: string, filename?: string) => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || `Erreur ${response.status}`);
+  }
+
+  const blob = await response.blob();
+  const objectUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = filename || 'rapport_sci.xlsx';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(objectUrl);
+};
+
 export default function App() {
-  const [results, setResults] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const baseUrl = useMemo(() => {
+    const raw = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:5000';
+    return raw.replace(/\/$/, '');
+  }, []);
 
-  const handleAnalyze = async (data: any) => {
-    setLoading(true);
+  const [view, setView] = useState<ViewState>('list');
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formLoading, setFormLoading] = useState(false);
+  const [results, setResults] = useState<any | null>(null);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [formInitialValues, setFormInitialValues] = useState<any | undefined>(undefined);
+  const [formInitialAppartements, setFormInitialAppartements] = useState<any[] | undefined>(undefined);
+  const [formInitialRevenus, setFormInitialRevenus] = useState<any[] | undefined>(undefined);
+  const [projectAction, setProjectAction] = useState<{ id: string; type: 'view' | 'edit' | 'delete' } | null>(null);
+  const [downloadingProjectId, setDownloadingProjectId] = useState<string | null>(null);
+
+  const fetchProjects = useCallback(async () => {
+    setProjectsLoading(true);
+    setListError(null);
     try {
-      const baseUrl = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:5000';
-      const apiUrl = `${baseUrl.replace(/\/$/, '')}/api/analyze`;
+      const response = await fetch(`${baseUrl}/api/projects`);
+      const body = await response.json();
+      if (!response.ok || body.success === false) {
+        throw new Error(body.error || `Erreur ${response.status}`);
+      }
+      setProjects(body.projects || []);
+      setActionError(null);
+    } catch (error: any) {
+      setProjects([]);
+      setListError(error.message || 'Impossible de charger les projets');
+    } finally {
+      setProjectsLoading(false);
+    }
+  }, [baseUrl]);
 
-      console.log('Envoi des données:', data);
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
 
-      const response = await fetch(apiUrl, {
-        method: 'POST',
+  const handleCreateProject = () => {
+    setEditingProjectId(null);
+    setFormInitialValues(undefined);
+    setFormInitialAppartements(undefined);
+    setFormInitialRevenus(undefined);
+    setFormError(null);
+    setView('form');
+  };
+
+  const handleSubmitProject = async (payload: any) => {
+    setFormLoading(true);
+    setFormError(null);
+    try {
+      const method = editingProjectId ? 'PUT' : 'POST';
+      const url = editingProjectId
+        ? `${baseUrl}/api/projects/${editingProjectId}`
+        : `${baseUrl}/api/projects`;
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Erreur réponse:', errorText);
-        throw new Error(`Erreur ${response.status}: ${errorText}`);
+      const body = await response.json();
+      if (!response.ok || body.success === false) {
+        throw new Error(body.error || 'Impossible de sauvegarder le projet');
       }
 
-      const result = await response.json();
-      console.log('Résultats reçus:', result);
-      setResults({ ...result, apiBaseUrl: baseUrl.replace(/\/$/, '') });
+      const projectId = body.project_id || body.project?.id || editingProjectId;
+      setResults({ ...body, id: projectId, apiBaseUrl: baseUrl });
+      setEditingProjectId(projectId || null);
+      setView('results');
+      await fetchProjects();
     } catch (error: any) {
-      console.error('Erreur complète:', error);
-      setResults({
-        success: false,
-        error: error.message || 'Erreur inconnue'
-      });
+      setFormError(error.message || 'Erreur lors de la sauvegarde du projet');
     } finally {
-      setLoading(false);
+      setFormLoading(false);
     }
   };
 
-  const handleReset = () => {
+  const handleResultsBack = () => {
     setResults(null);
+    setEditingProjectId(null);
+    setView('list');
+    fetchProjects();
   };
+
+  const handleViewProject = async (projectId: string) => {
+    setProjectAction({ id: projectId, type: 'view' });
+    setActionError(null);
+    try {
+      const response = await fetch(`${baseUrl}/api/projects/${projectId}`);
+      const body = await response.json();
+      if (!response.ok || body.success === false) {
+        throw new Error(body.error || 'Impossible de charger le projet');
+      }
+
+      const detail: ProjectDetail = {
+        id: body.id,
+        nom_sci: body.nom_sci,
+        created_at: body.created_at,
+        updated_at: body.updated_at,
+        excel_url: body.excel_url,
+        indicateurs: body.indicateurs,
+        annee_creation: body.annee_creation,
+        nombre_associes: body.nombre_associes,
+        payload: body.payload,
+        projection: body.projection,
+      };
+
+      setResults({ ...detail, id: projectId, project_id: projectId, success: true, apiBaseUrl: baseUrl });
+      setEditingProjectId(projectId);
+      setView('results');
+    } catch (error: any) {
+      setActionError(error.message || "Erreur lors de l'ouverture du projet");
+    } finally {
+      setProjectAction(null);
+    }
+  };
+
+  const handleEditProject = async (projectId: string) => {
+    setProjectAction({ id: projectId, type: 'edit' });
+    setActionError(null);
+    try {
+      const response = await fetch(`${baseUrl}/api/projects/${projectId}`);
+      const body = await response.json();
+      if (!response.ok || body.success === false) {
+        throw new Error(body.error || 'Impossible de charger le projet');
+      }
+
+      setEditingProjectId(projectId);
+      setFormInitialValues(body.payload);
+      setFormInitialAppartements(body.payload?.appartements || []);
+      setFormInitialRevenus(body.payload?.revenus_annexes || []);
+      setFormError(null);
+      setView('form');
+    } catch (error: any) {
+      setActionError(error.message || 'Erreur lors de la récupération du projet');
+    } finally {
+      setProjectAction(null);
+    }
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    if (!window.confirm('Supprimer ce projet ?')) {
+      return;
+    }
+
+    setProjectAction({ id: projectId, type: 'delete' });
+    setActionError(null);
+    try {
+      const response = await fetch(`${baseUrl}/api/projects/${projectId}`, {
+        method: 'DELETE',
+      });
+      const body = await response.json();
+      if (!response.ok || body.success === false) {
+        throw new Error(body.error || 'Suppression impossible');
+      }
+      if (results && results.id === projectId) {
+        setResults(null);
+      }
+      await fetchProjects();
+    } catch (error: any) {
+      setActionError(error.message || 'Erreur lors de la suppression du projet');
+    } finally {
+      setProjectAction(null);
+    }
+  };
+
+  const handleExportProject = async (project: ProjectSummary) => {
+    if (!project.excel_url) {
+      setActionError('Ce projet ne possède pas encore de rapport Excel.');
+      return;
+    }
+
+    setDownloadingProjectId(project.id);
+    setActionError(null);
+    try {
+      const safeName = project.nom_sci
+        ? project.nom_sci.replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '').toLowerCase()
+        : 'rapport_sci';
+      await downloadExcelFile(`${baseUrl}${project.excel_url}`, `${safeName || 'rapport_sci'}_${project.id}.xlsx`);
+    } catch (error: any) {
+      setActionError(error.message || "Erreur lors de l'export Excel");
+    } finally {
+      setDownloadingProjectId(null);
+    }
+  };
+
+  const handleRefresh = () => {
+    fetchProjects();
+  };
+
+  const handleFormCancel = () => {
+    setEditingProjectId(null);
+    setView('list');
+  };
+
+  const renderProjectList = () => (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-100">Portefeuille de projets SCI</h2>
+          <p className="text-sm text-slate-400">
+            Centralisez vos analyses, relancez des simulations et exportez vos rapports en un clic.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={handleRefresh}
+            className="flex items-center gap-2 px-4 py-2 glass-dark border border-slate-600 text-slate-300 rounded-lg hover:text-white hover:border-cyan-500"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Actualiser
+          </button>
+          <button
+            onClick={handleCreateProject}
+            className="flex items-center gap-2 px-5 py-2.5 bg-cyan-600 text-white rounded-lg hover:bg-cyan-500 font-medium"
+          >
+            <PlusCircle className="w-5 h-5" />
+            Nouveau projet
+          </button>
+        </div>
+      </div>
+
+      {listError && (
+        <div className="border border-red-500/40 bg-red-900/40 text-red-100 px-4 py-3 rounded-lg">
+          {listError}
+        </div>
+      )}
+
+      {actionError && (
+        <div className="border border-yellow-500/40 bg-yellow-900/30 text-yellow-100 px-4 py-3 rounded-lg">
+          {actionError}
+        </div>
+      )}
+
+      {projectsLoading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cyan-400"></div>
+        </div>
+      ) : projects.length === 0 ? (
+        <div className="glass-darker border border-slate-700 rounded-xl p-10 text-center text-slate-300">
+          Aucun projet enregistré pour le moment. Lancez votre première simulation !
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {projects.map((project) => {
+            const indicators = (project.indicateurs ?? {}) as Record<string, any>;
+            const isViewing = projectAction?.id === project.id && projectAction?.type === 'view';
+            const isEditing = projectAction?.id === project.id && projectAction?.type === 'edit';
+            const isDeleting = projectAction?.id === project.id && projectAction?.type === 'delete';
+
+            return (
+              <div key={project.id} className="glass-darker border border-slate-700 rounded-xl p-6">
+                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-slate-100">{project.nom_sci}</h3>
+                    <p className="text-xs text-slate-400">
+                      Créé le {formatDate(project.created_at)} • Dernière mise à jour {formatDate(project.updated_at)}
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3">
+                      <div className="glass-dark border border-slate-700 rounded-lg p-3">
+                        <p className="text-xs text-slate-400">Rendement brut</p>
+                        <p className="text-base font-semibold text-cyan-300">
+                          {indicators.rendement_brut ?? '—'}
+                        </p>
+                      </div>
+                      <div className="glass-dark border border-slate-700 rounded-lg p-3">
+                        <p className="text-xs text-slate-400">Rendement net-net</p>
+                        <p className="text-base font-semibold text-emerald-300">
+                          {indicators.rendement_net_net ?? '—'}
+                        </p>
+                      </div>
+                      <div className="glass-dark border border-slate-700 rounded-lg p-3">
+                        <p className="text-xs text-slate-400">TRI projet</p>
+                        <p className="text-base font-semibold text-amber-300">
+                          {indicators.taux_retour_investissement ?? '—'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => handleViewProject(project.id)}
+                      disabled={isViewing}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-600 text-slate-200 hover:border-cyan-500 hover:text-white ${
+                        isViewing ? 'opacity-60 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <Eye className="w-4 h-4" />
+                      {isViewing ? 'Ouverture…' : 'Consulter'}
+                    </button>
+                    <button
+                      onClick={() => handleEditProject(project.id)}
+                      disabled={isEditing}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-600 text-slate-200 hover:border-cyan-500 hover:text-white ${
+                        isEditing ? 'opacity-60 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      {isEditing ? 'Chargement…' : 'Modifier'}
+                    </button>
+                    <button
+                      onClick={() => handleExportProject(project)}
+                      disabled={downloadingProjectId === project.id}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-emerald-600/50 text-emerald-200 hover:border-emerald-400 hover:text-white ${
+                        downloadingProjectId === project.id ? 'opacity-60 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <Download className="w-4 h-4" />
+                      {downloadingProjectId === project.id ? 'Export…' : 'Exporter'}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteProject(project.id)}
+                      disabled={isDeleting}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-red-600/50 text-red-200 hover:border-red-400 hover:text-white ${
+                        isDeleting ? 'opacity-60 cursor-not-allowed' : ''
+                      }`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {isDeleting ? 'Suppression…' : 'Supprimer'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderForm = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-slate-100">
+            {editingProjectId ? 'Modifier le projet' : 'Nouveau projet'}
+          </h2>
+          <p className="text-sm text-slate-400">
+            Renseignez les paramètres pour lancer une simulation complète et l'enregistrer dans PostgreSQL.
+          </p>
+        </div>
+        <button
+          onClick={handleFormCancel}
+          className="flex items-center gap-2 px-4 py-2 glass-dark border border-slate-600 text-slate-300 rounded-lg hover:text-white hover:border-cyan-500"
+        >
+          Retour à la liste
+        </button>
+      </div>
+
+      {formError && (
+        <div className="border border-red-500/40 bg-red-900/40 text-red-100 px-4 py-3 rounded-lg">
+          {formError}
+        </div>
+      )}
+
+      <SCIForm
+        onSubmit={handleSubmitProject}
+        loading={formLoading}
+        initialValues={formInitialValues}
+        initialAppartements={formInitialAppartements}
+        initialRevenusAnnexes={formInitialRevenus}
+        onCancel={handleFormCancel}
+        submitLabel={editingProjectId ? 'Mettre à jour le projet' : 'Analyser et enregistrer'}
+      />
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
@@ -60,18 +449,18 @@ export default function App() {
                 Analyseur SCI Premium
                 <TrendingUp className="w-6 h-6 text-cyan-400" />
               </h1>
-              <p className="text-sm text-slate-400">Analyse professionnelle • 30 ans • Dark Business Edition</p>
+              <p className="text-sm text-slate-400">
+                Pilotage multi-projets • Calculs 30 ans • Export Excel instantané
+              </p>
             </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8">
-        {!results ? (
-          <SCIForm onSubmit={handleAnalyze} loading={loading} />
-        ) : (
-          <DarkResultsTabs data={results} onBack={handleReset} />
-        )}
+        {view === 'list' && renderProjectList()}
+        {view === 'form' && renderForm()}
+        {view === 'results' && results && <DarkResultsTabs data={results} onBack={handleResultsBack} />}
       </main>
     </div>
   );
