@@ -1,4 +1,4 @@
-.PHONY: install install-frontend install-backend dev dev-frontend dev-backend backend-example backend-custom backend-deps build clean doc help
+.PHONY: install install-frontend install-backend dev dev-frontend dev-backend dev-backend-cli backend-example backend-custom backend-deps build clean doc help
 
 # Variables
 FRONTEND_DIR=./frontend
@@ -27,7 +27,11 @@ install-backend:
 	$(VENV_PIP) install -r $(BACKEND_DIR)/requirements.txt
 
 # Démarrer l'environnement de développement complet
-dev: dev-backend dev-frontend
+dev: install-backend install-frontend
+	@echo "🚀 Démarrage du frontend et du backend API..."
+	@trap "kill 0" EXIT; \
+	(cd $(BACKEND_DIR) && $(VENV_PYTHON) web_app.py) & \
+	cd $(FRONTEND_DIR) && $(NPM) run dev
 
 # Démarrer le serveur frontend
 dev-frontend:
@@ -36,6 +40,11 @@ dev-frontend:
 
 # Démarrer le serveur backend
 dev-backend: install-backend
+	@echo "🐍 Lancement de l'API backend (Flask)..."
+	cd $(BACKEND_DIR) && $(VENV_PYTHON) web_app.py
+
+# Ancien mode interactif via la CLI Python
+dev-backend-cli: install-backend
 	@echo "🐍 Lancement du backend en mode interactif..."
 	$(VENV_PYTHON) $(BACKEND_DIR)/start_here.py interactive
 
@@ -70,9 +79,10 @@ doc:
 	@echo "  make install        - Installe toutes les dépendances"
 	@echo "  make install-frontend - Installe les dépendances frontend"
 	@echo "  make install-backend  - Crée le venv backend et installe les dépendances"
-	@echo "  make dev            - Démarre le serveur de développement complet"
+	@echo "  make dev            - Démarre frontend (Vite) et backend API Flask"
 	@echo "  make dev-frontend   - Démarre uniquement le frontend"
-	@echo "  make dev-backend    - Démarre le backend en mode interactif"
+	@echo "  make dev-backend    - Démarre uniquement l'API backend"
+	@echo "  make dev-backend-cli - Démarre l'ancien mode interactif"
 	@echo "  make backend-example - Génère le rapport exemple dans le venv"
 	@echo "  make backend-custom  - Génère le rapport personnalisé"
 	@echo "  make backend-deps    - Vérifie les dépendances Python"
