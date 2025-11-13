@@ -34,11 +34,38 @@ else:
     if not allowed_origins:
         allowed_origins = ["*"]
 
+allowed_origin_set = set(allowed_origins) if isinstance(allowed_origins, list) else None
+
 CORS(
     app,
     resources={r"/api/*": {"origins": allowed_origins}},
     expose_headers=["Content-Disposition"],
 )
+
+
+@app.after_request
+def ensure_cors_headers(response):
+    origin = request.headers.get("Origin")
+
+    if allowed_origins == "*":
+        response.headers.setdefault("Access-Control-Allow-Origin", "*")
+    elif origin and allowed_origin_set and origin in allowed_origin_set:
+        response.headers.setdefault("Access-Control-Allow-Origin", origin)
+        response.headers.setdefault("Vary", "Origin")
+
+    if request.method == "OPTIONS":
+        response.headers.setdefault(
+            "Access-Control-Allow-Methods",
+            "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+        )
+        request_headers = request.headers.get("Access-Control-Request-Headers")
+        if request_headers:
+            response.headers.setdefault("Access-Control-Allow-Headers", request_headers)
+        else:
+            response.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        response.headers.setdefault("Access-Control-Max-Age", "86400")
+
+    return response
 
 REPORTS_DIR = Path(__file__).resolve().parent / "reports"
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
