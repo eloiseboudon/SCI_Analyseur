@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Send, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SCIFormProps {
   onSubmit: (data: any) => void;
   loading: boolean;
+  initialValues?: any;
+  initialAppartements?: Array<any>;
+  initialRevenusAnnexes?: Array<{ nom: string; montant_annuel: number }>;
+  onCancel?: () => void;
+  submitLabel?: string;
 }
 
-export function SCIForm({ onSubmit, loading }: SCIFormProps) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  const [data, setData] = useState({
+const BASE_VALUES = {
     nom_sci: 'Ma SCI',
     annee_creation: 2024,
     capital: 1000,
@@ -54,14 +56,57 @@ export function SCIForm({ onSubmit, loading }: SCIFormProps) {
 
     travaux_gros_entretien_10ans: 15000,
     travaux_gros_entretien_20ans: 20000,
-  });
+  };
 
-  const [appartements, setAppartements] = useState([
-    { numero: 1, loyer_mensuel: 650, surface: 45, charges_recuperables: 50 },
-    { numero: 2, loyer_mensuel: 750, surface: 55, charges_recuperables: 60 },
-  ]);
+const DEFAULT_APPARTEMENTS = [
+  { numero: 1, loyer_mensuel: 650, surface: 45, charges_recuperables: 50 },
+  { numero: 2, loyer_mensuel: 750, surface: 55, charges_recuperables: 60 },
+];
 
-  const [revenusAnnexes, setRevenusAnnexes] = useState<Array<{ nom: string; montant_annuel: number }>>([]);
+export function SCIForm({
+  onSubmit,
+  loading,
+  initialValues,
+  initialAppartements,
+  initialRevenusAnnexes,
+  onCancel,
+  submitLabel,
+}: SCIFormProps) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const [data, setData] = useState({ ...BASE_VALUES, ...initialValues });
+
+  const [appartements, setAppartements] = useState(
+    initialAppartements && initialAppartements.length > 0
+      ? initialAppartements.map((apt, index) => ({ numero: apt.numero ?? index + 1, ...apt }))
+      : DEFAULT_APPARTEMENTS.map((apt) => ({ ...apt })),
+  );
+
+  const [revenusAnnexes, setRevenusAnnexes] = useState<Array<{ nom: string; montant_annuel: number }>>(
+    initialRevenusAnnexes && initialRevenusAnnexes.length > 0
+      ? initialRevenusAnnexes.map((rev) => ({ ...rev }))
+      : [],
+  );
+
+  useEffect(() => {
+    setData({ ...BASE_VALUES, ...initialValues });
+  }, [initialValues]);
+
+  useEffect(() => {
+    if (initialAppartements && initialAppartements.length > 0) {
+      setAppartements(initialAppartements.map((apt, index) => ({ numero: apt.numero ?? index + 1, ...apt })));
+    } else {
+      setAppartements(DEFAULT_APPARTEMENTS.map((apt) => ({ ...apt })));
+    }
+  }, [initialAppartements]);
+
+  useEffect(() => {
+    if (initialRevenusAnnexes && initialRevenusAnnexes.length > 0) {
+      setRevenusAnnexes(initialRevenusAnnexes.map((rev) => ({ ...rev })));
+    } else {
+      setRevenusAnnexes([]);
+    }
+  }, [initialRevenusAnnexes]);
 
   const addAppartement = () => {
     setAppartements([
@@ -599,23 +644,34 @@ export function SCIForm({ onSubmit, loading }: SCIFormProps) {
         )}
       </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-600 disabled:opacity-50 font-medium text-base"
-      >
-        {loading ? (
-          <>
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-            Analyse en cours...
-          </>
-        ) : (
-          <>
-            <Send className="w-5 h-5" />
-            Lancer l'Analyse Professionnelle (30 ans)
-          </>
+      <div className="flex justify-end gap-3 pt-2">
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="flex items-center gap-2 px-5 py-2.5 glass-dark border border-slate-600 text-slate-300 rounded-lg hover:text-white hover:border-cyan-500"
+          >
+            Annuler
+          </button>
         )}
-      </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex items-center justify-center gap-2 px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-500 disabled:opacity-60 font-medium text-base"
+        >
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              Analyse en cours...
+            </>
+          ) : (
+            <>
+              <Send className="w-5 h-5" />
+              {submitLabel || "Lancer l'analyse"}
+            </>
+          )}
+        </button>
+      </div>
     </form>
   );
 }
