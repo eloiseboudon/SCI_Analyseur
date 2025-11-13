@@ -30,7 +30,7 @@ install-backend:
 dev: install-backend install-frontend
 	@echo "🚀 Démarrage du frontend et du backend API..."
 	@trap "kill 0" EXIT; \
-	(cd $(BACKEND_DIR) && $(VENV_PYTHON) web_app.py) & \
+	($(VENV_PYTHON) $(BACKEND_DIR)/web_app.py) & \
 	cd $(FRONTEND_DIR) && $(NPM) run dev
 
 # Démarrer le serveur frontend
@@ -41,7 +41,7 @@ dev-frontend:
 # Démarrer le serveur backend
 dev-backend: install-backend
 	@echo "🐍 Lancement de l'API backend (Flask)..."
-	cd $(BACKEND_DIR) && $(VENV_PYTHON) web_app.py
+	$(VENV_PYTHON) $(BACKEND_DIR)/web_app.py
 
 # Ancien mode interactif via la CLI Python
 dev-backend-cli: install-backend

@@ -47,12 +47,16 @@ REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 REPORT_STORAGE: Dict[str, Path] = {}
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
-if not DATABASE_URL:
-    raise RuntimeError(
-        "DATABASE_URL environment variable must be set with a PostgreSQL connection string."
-    )
 
-engine = create_engine(DATABASE_URL, pool_pre_ping=True, future=True)
+default_sqlite_path = Path(__file__).resolve().parent / "sci_projects.db"
+if not DATABASE_URL:
+    DATABASE_URL = f"sqlite:///{default_sqlite_path}"
+
+engine_kwargs: Dict[str, Any] = {"future": True, "pool_pre_ping": True}
+if DATABASE_URL.startswith("sqlite"):
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+
+engine = create_engine(DATABASE_URL, **engine_kwargs)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False, future=True)
 Base = declarative_base()
 
