@@ -17,7 +17,28 @@ from sqlalchemy.orm import Mapped, declarative_base, mapped_column, sessionmaker
 
 
 app = Flask(__name__)
-CORS(app)
+
+default_allowed_origins = {
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+}
+environment_origins = {
+    origin.strip()
+    for origin in os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+}
+if "*" in environment_origins:
+    allowed_origins: str | List[str] = "*"
+else:
+    allowed_origins = list(default_allowed_origins | environment_origins)
+    if not allowed_origins:
+        allowed_origins = ["*"]
+
+CORS(
+    app,
+    resources={r"/api/*": {"origins": allowed_origins}},
+    expose_headers=["Content-Disposition"],
+)
 
 REPORTS_DIR = Path(__file__).resolve().parent / "reports"
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
