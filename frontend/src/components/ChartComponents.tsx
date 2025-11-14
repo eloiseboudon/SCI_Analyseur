@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface LineChartProps {
   data: Array<{ annee: number; value: number }>;
@@ -7,7 +7,7 @@ interface LineChartProps {
   height?: number;
 }
 
-export function LineChart({ data, label, color, height = 300 }: LineChartProps) {
+export function LineChart({ data, color, height = 300 }: Omit<LineChartProps, 'label'>) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -133,6 +133,14 @@ export function LineChart({ data, label, color, height = 300 }: LineChartProps) 
   );
 }
 
+interface DonutSegment {
+  label: string;
+  value: number;
+  color: string;
+  startAngle: number;
+  endAngle: number;
+}
+
 interface DonutChartProps {
   data: Array<{ label: string; value: number; color: string }>;
   centerText?: string;
@@ -141,6 +149,15 @@ interface DonutChartProps {
 
 export function DonutChart({ data, centerText, centerValue }: DonutChartProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [segments, _setSegments] = useState<DonutSegment[]>([]);
+
+  // We need to use a ref to store segments to avoid dependency issues
+  const segmentsRef = useRef<DonutSegment[]>([]);
+  const setSegments = (newSegments: DonutSegment[]) => {
+    segmentsRef.current = newSegments;
+    _setSegments(newSegments);
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -164,25 +181,29 @@ export function DonutChart({ data, centerText, centerValue }: DonutChartProps) {
 
     ctx.clearRect(0, 0, width, height);
 
-    const total = data.reduce((sum, d) => sum + d.value, 0);
-    let currentAngle = -Math.PI / 2;
+    // Draw segments
+    segments.forEach((segment, index) => {
+      const isHovered = index === hoveredIndex;
+      const highlightFactor = isHovered ? 1.1 : 1;
 
-    data.forEach((segment) => {
-      const sliceAngle = (segment.value / total) * Math.PI * 2;
-
+      // Draw outer arc with highlight effect
       ctx.beginPath();
-      ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
-      ctx.arc(centerX, centerY, innerRadius, currentAngle + sliceAngle, currentAngle, true);
+      ctx.arc(centerX, centerY, radius * highlightFactor, segment.startAngle, segment.endAngle);
+      ctx.arc(centerX, centerY, innerRadius, segment.endAngle, segment.startAngle, true);
       ctx.closePath();
 
-      ctx.fillStyle = segment.color;
+      // Apply highlight effect
+      const color = isHovered ?
+        `${segment.color}${isHovered ? 'cc' : 'ff'}` : // Add transparency on hover
+        segment.color;
+
+      ctx.fillStyle = color;
       ctx.fill();
 
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2;
+      // Draw border
+      ctx.strokeStyle = isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.7)';
+      ctx.lineWidth = isHovered ? 2.5 : 1.5;
       ctx.stroke();
-
-      currentAngle += sliceAngle;
     });
 
     // Center text
@@ -197,29 +218,82 @@ export function DonutChart({ data, centerText, centerValue }: DonutChartProps) {
       ctx.font = '12px Inter, sans-serif';
       ctx.fillText(centerText, centerX, centerY + 15);
     }
-  }, [data, centerText, centerValue]);
+  }, [data, centerText, centerValue, segments, hoveredIndex, canvasRef]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const radius = Math.min(rect.width, rect.height) / 2 - 20;
+    const innerRadius = radius * 0.6;
+
+    // Calculate distance from center and angle
+    const dx = x - centerX;
+    const dy = y - centerY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Check if mouse is within the donut
+    if (distance >= innerRadius && distance <= radius) {
+      // Calculate angle in radians (0 to 2π)
+      let angle = Math.atan2(dy, dx);
+      // Convert to 0 to 2π range
+      if (angle < 0) angle += 2 * Math.PI;
+      // Adjust for initial -π/2 rotation
+      angle = (angle + Math.PI / 2) % (2 * Math.PI);
+
+      // Find the segment that contains this angle
+      const hoveredSegmentIndex = segmentsRef.current.findIndex(
+        segment => angle >= segment.startAngle && angle <= segment.endAngle
+      );
+
+      if (hoveredSegmentIndex !== hoveredIndex) {
+        setHoveredIndex(hoveredSegmentIndex !== -1 ? hoveredSegmentIndex : null);
+      }
+    } else if (hoveredIndex !== null) {
+      setHoveredIndex(null);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredIndex(null);
+  };
 
   return (
     <div className="flex items-center gap-6">
       <div className="relative w-64 h-64">
         <canvas
           ref={canvasRef}
-          className="w-full h-full"
+          className="w-full h-full cursor-pointer"
           style={{ width: '100%', height: '100%' }}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
         />
       </div>
       <div className="flex-1 space-y-2">
         {data.map((item, i) => (
-          <div key={i} className="flex items-center justify-between p-2 rounded hover:bg-slate-50">
+          <div
+            key={i}
+            className={`flex items-center justify-between p-2 rounded transition-all duration-200 ${i === hoveredIndex
+              ? 'bg-slate-100 dark:bg-slate-700 scale-[1.02] shadow-lg'
+              : 'hover:bg-slate-50 dark:hover:bg-slate-700/50'
+              }`}
+            onMouseEnter={() => setHoveredIndex(i)}
+            onMouseLeave={() => setHoveredIndex(null)}
+          >
             <div className="flex items-center gap-3">
               <div
                 className="w-4 h-4 rounded"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="text-sm font-medium text-slate-700">{item.label}</span>
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-200">{item.label}</span>
             </div>
             <div className="text-right">
-              <span className="text-sm font-bold text-slate-900">{item.value.toLocaleString()} €</span>
+              <span className="text-sm font-bold text-slate-900 dark:text-white">{item.value.toLocaleString()} €</span>
               <span className="text-xs text-slate-500 ml-2">
                 {((item.value / data.reduce((s, d) => s + d.value, 0)) * 100).toFixed(1)}%
               </span>

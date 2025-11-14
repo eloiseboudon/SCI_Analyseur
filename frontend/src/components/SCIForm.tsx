@@ -1,5 +1,5 @@
+import { ChevronDown, ChevronUp, Plus, Send, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Send, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SCIFormProps {
   onSubmit: (data: any) => void;
@@ -12,51 +12,51 @@ interface SCIFormProps {
 }
 
 const BASE_VALUES = {
-    nom_sci: 'Ma SCI',
-    annee_creation: 2024,
-    capital: 1000,
-    nombre_associes: 1,
+  nom_sci: 'Ma SCI',
+  annee_creation: 2024,
+  capital: 1000,
+  nombre_associes: 1,
 
-    nom_bien: 'Immeuble Rapport',
-    annee_achat: 2024,
-    age_immeuble: 15,
-    prix_achat: 200000,
-    valeur_terrain: 40000,
-    frais_notaire: 16000,
-    frais_agence: 10000,
-    travaux_initiaux: 20000,
-    meubles: 5000,
+  nom_bien: 'Immeuble Rapport',
+  annee_achat: 2024,
+  age_immeuble: 15,
+  prix_achat: 200000,
+  valeur_terrain: 40000,
+  frais_notaire: 16000,
+  frais_agence: 10000,
+  travaux_initiaux: 20000,
+  meubles: 5000,
 
-    apport: 50000,
-    apport_cca: 0,
-    taux_interet_cca: 2.0,
-    capital_emprunte: 200000,
-    taux_interet: 3.5,
-    duree_pret: 20,
-    frais_dossier: 1000,
-    frais_garantie: 2000,
-    assurance_emprunteur_taux: 0.3,
+  apport: 50000,
+  apport_cca: 0,
+  taux_interet_cca: 2.0,
+  capital_emprunte: 200000,
+  taux_interet: 3.5,
+  duree_pret: 20,
+  frais_dossier: 1000,
+  frais_garantie: 2000,
+  assurance_emprunteur_taux: 0.3,
 
-    taxe_fonciere: 1800,
-    charges_copro_annuelles: 1200,
-    frais_comptable: 1200,
-    assurance_pno: 300,
-    assurance_gli_taux: 2.5,
-    frais_gestion_taux: 0,
-    frais_entretien_annuel: 500,
-    honoraires_gerant: 0,
+  taxe_fonciere: 1800,
+  charges_copro_annuelles: 1200,
+  frais_comptable: 1200,
+  assurance_pno: 300,
+  assurance_gli_taux: 2.5,
+  frais_gestion_taux: 0,
+  frais_entretien_annuel: 500,
+  honoraires_gerant: 0,
 
-    taux_vacance: 5,
-    indexation_loyers: 2,
-    inflation_charges: 2,
-    duree_amortissement_batiment: 40,
-    duree_amortissement_travaux: 15,
-    duree_amortissement_frais: 10,
-    duree_amortissement_meubles: 5,
+  taux_vacance: 5,
+  indexation_loyers: 2,
+  inflation_charges: 2,
+  duree_amortissement_batiment: 40,
+  duree_amortissement_travaux: 15,
+  duree_amortissement_frais: 10,
+  duree_amortissement_meubles: 5,
 
-    travaux_gros_entretien_10ans: 15000,
-    travaux_gros_entretien_20ans: 20000,
-  };
+  travaux_gros_entretien_10ans: 15000,
+  travaux_gros_entretien_20ans: 20000,
+};
 
 const DEFAULT_APPARTEMENTS = [
   { numero: 1, loyer_mensuel: 650, surface: 45, charges_recuperables: 50 },
@@ -150,9 +150,13 @@ export function SCIForm({
     });
   };
 
-  const totalLoyers = appartements.reduce((sum, apt) => sum + apt.loyer_mensuel, 0) * 12;
+  const totalLoyersMensuels = appartements.reduce(
+    (sum, apt) => sum + (Number(apt.loyer_mensuel) || 0),
+    0,
+  );
+  const totalLoyersAnnuels = totalLoyersMensuels * 12;
   const coutTotal = data.prix_achat + data.frais_notaire + data.frais_agence + data.travaux_initiaux + data.meubles;
-  const rendementBrut = ((totalLoyers / coutTotal) * 100).toFixed(2);
+  const rendementBrut = coutTotal > 0 ? ((totalLoyersAnnuels / coutTotal) * 100).toFixed(2) : '0.00';
 
   return (
     <form onSubmit={handleSubmit} className="glass-darker rounded-xl border border-slate-700 p-6 space-y-6">
@@ -181,7 +185,7 @@ export function SCIForm({
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1">Associés</label>
+          <label className="block text-xs font-medium text-slate-300 mb-1">Associé·e·s</label>
           <input
             type="number"
             value={data.nombre_associes}
@@ -348,103 +352,131 @@ export function SCIForm({
       </div>
 
       <div className="pb-6 border-b border-slate-700">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-slate-100">Appartements / Lots</h3>
-          <button
-            type="button"
-            onClick={addAppartement}
-            className="text-sm flex items-center gap-1 text-cyan-400 hover:text-cyan-300 font-medium"
-          >
-            <Plus className="w-4 h-4" />
-            Ajouter
-          </button>
-        </div>
-        <div className="space-y-2">
-          {appartements.map((apt, index) => (
-            <div key={index} className="flex gap-2 items-center">
-              <span className="text-sm font-medium text-slate-400 w-8">#{apt.numero}</span>
-              <input
-                type="number"
-                value={apt.loyer_mensuel}
-                onChange={(e) => updateAppartement(index, 'loyer_mensuel', parseFloat(e.target.value))}
-                placeholder="Loyer (€/mois)"
-                className="flex-1 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100"
-              />
-              <input
-                type="number"
-                value={apt.surface}
-                onChange={(e) => updateAppartement(index, 'surface', parseFloat(e.target.value))}
-                placeholder="Surface (m²)"
-                className="w-20 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100"
-              />
-              <input
-                type="number"
-                value={apt.charges_recuperables}
-                onChange={(e) => updateAppartement(index, 'charges_recuperables', parseFloat(e.target.value))}
-                placeholder="Charges (€/mois)"
-                className="w-28 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100"
-              />
-              {appartements.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeAppartement(index)}
-                  className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 bg-cyan-900/20 border border-cyan-500/30 rounded-lg p-3">
-          <p className="text-sm text-cyan-200">
-            <strong>Loyers annuels:</strong> {totalLoyers.toLocaleString()} € |
-            <strong> Rendement brut:</strong> {rendementBrut}%
-          </p>
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <h3 className="text-sm font-medium text-slate-200">Appartements / Lots</h3>
+            <button
+              type="button"
+              onClick={addAppartement}
+              className="text-sm flex items-center gap-1 text-cyan-400 hover:text-cyan-300 font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              Ajouter un appartement
+            </button>
+          </div>
+
+          {/* En-têtes des colonnes */}
+          <div className="grid grid-cols-12 gap-2 text-xs text-slate-400 font-medium">
+            <div className="col-span-1">#</div>
+            <div className="col-span-5">Loyer (€/mois)</div>
+            <div className="col-span-3">Surface (m²)</div>
+            <div className="col-span-2">Charges (€/mois)</div>
+          </div>
+
+          {/* Liste des appartements */}
+          <div className="space-y-2">
+            {appartements.map((apt, index) => (
+              <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                <div className="col-span-1 text-sm font-medium text-slate-400">#{apt.numero}</div>
+
+                <div className="col-span-5">
+                  <input
+                    type="number"
+                    value={apt.loyer_mensuel}
+                    onChange={(e) => updateAppartement(index, 'loyer_mensuel', parseFloat(e.target.value))}
+                    placeholder="Loyer (€/mois)"
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+                  />
+                </div>
+
+                <div className="col-span-3">
+                  <input
+                    type="number"
+                    value={apt.surface}
+                    onChange={(e) => updateAppartement(index, 'surface', parseFloat(e.target.value))}
+                    placeholder="Surface (m²)"
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+                  />
+                </div>
+
+                <div className="col-span-2">
+                  <input
+                    type="number"
+                    value={apt.charges_recuperables}
+                    onChange={(e) => updateAppartement(index, 'charges_recuperables', parseFloat(e.target.value))}
+                    placeholder="Charges (€/mois)"
+                    className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+                  />
+                </div>
+
+                <div className="col-span-1 flex justify-end">
+                  {appartements.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeAppartement(index)}
+                      className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-3 bg-cyan-900/20 border border-cyan-500/30 rounded-lg p-3">
+            <p className="text-sm text-cyan-200">
+              <strong>Loyers annuels:</strong> {totalLoyersAnnuels.toLocaleString()} € |
+              <strong> Rendement brut:</strong> {rendementBrut}%
+            </p>
+          </div>
         </div>
       </div>
 
       <div className="pb-6 border-b border-slate-700">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-slate-100">Revenus Annexes (optionnel)</h3>
-          <button
-            type="button"
-            onClick={addRevenuAnnexe}
-            className="text-sm flex items-center gap-1 text-cyan-400 hover:text-cyan-300 font-medium"
-          >
-            <Plus className="w-4 h-4" />
-            Ajouter
-          </button>
-        </div>
-        {revenusAnnexes.length > 0 && (
-          <div className="space-y-2">
-            {revenusAnnexes.map((rev, index) => (
-              <div key={index} className="flex gap-2 items-center">
-                <input
-                  type="text"
-                  value={rev.nom}
-                  onChange={(e) => updateRevenuAnnexe(index, 'nom', e.target.value)}
-                  placeholder="Nom (Garage, Cave...)"
-                  className="flex-1 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100"
-                />
-                <input
-                  type="number"
-                  value={rev.montant_annuel}
-                  onChange={(e) => updateRevenuAnnexe(index, 'montant_annuel', parseFloat(e.target.value))}
-                  placeholder="Montant annuel (€)"
-                  className="w-40 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeRevenuAnnexe(index)}
-                  className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+        <h3 className="font-semibold text-slate-100 mb-3">Revenus Annexes</h3>
+        <div className="space-y-3">
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={addRevenuAnnexe}
+              className="text-sm flex items-center gap-1 text-cyan-400 hover:text-cyan-300 font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              Ajouter un revenu annexe
+            </button>
           </div>
-        )}
+
+          {revenusAnnexes.length > 0 && (
+            <div className="space-y-2">
+              {revenusAnnexes.map((rev, index) => (
+                <div key={index} className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    value={rev.nom}
+                    onChange={(e) => updateRevenuAnnexe(index, 'nom', e.target.value)}
+                    placeholder="Nom (Garage, Cave...)"
+                    className="flex-1 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100"
+                  />
+                  <input
+                    type="number"
+                    value={rev.montant_annuel}
+                    onChange={(e) => updateRevenuAnnexe(index, 'montant_annuel', parseFloat(e.target.value))}
+                    placeholder="Montant annuel (€)"
+                    className="w-40 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeRevenuAnnexe(index)}
+                    className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="pb-6 border-b border-slate-700">
@@ -672,6 +704,6 @@ export function SCIForm({
           )}
         </button>
       </div>
-    </form>
+    </form >
   );
 }
