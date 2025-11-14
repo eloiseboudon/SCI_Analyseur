@@ -188,7 +188,7 @@ function SyntheseTab({ indicateurs, projection }: any) {
     { label: 'Charges Exploit.', value: an1.charges_exploitation || 0, color: '#ef4444' },
     { label: 'Annuités Crédit', value: (an1.interets_pret || 0) + (an1.capital_pret || 0), color: '#f59e0b' },
     { label: 'Impôt IS', value: an1.is || 0, color: '#8b5cf6' },
-  ];
+  ].sort((a, b) => b.value - a.value);
 
   return (
     <div className="space-y-6">
