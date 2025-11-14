@@ -1,18 +1,181 @@
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Fichier .gitignore recommandé pour le projet Immometrics
 
-node_modules
-dist
-dist-ssr
-*.local
+# ============================================================================
+# Backend Python
+# ============================================================================
 
+# Environnement virtuel Python
+backend/.venv/
+backend/venv/
+backend/env/
+backend/ENV/
+
+# Fichiers Python
+backend/__pycache__/
+backend/*.py[cod]
+backend/*$py.class
+backend/*.so
+backend/.Python
+
+# Base de données SQLite
+backend/data/*.db
+backend/data/*.db-journal
+backend/data/*.db-wal
+backend/data/*.db-shm
+
+# Rapports générés
+backend/reports/*.xlsx
+backend/reports/*.xls
+backend/reports/*.pdf
+
+# Logs
+backend/logs/*.log
+backend/*.log
+
+# Configuration sensible
+backend/.env
+backend/.env.local
+backend/.env.*.local
+
+# IDE
+backend/.vscode/
+backend/.idea/
+
+# ============================================================================
+# Frontend React
+# ============================================================================
+
+# Dépendances
+frontend/node_modules/
+frontend/.pnp
+frontend/.pnp.js
+
+# Testing
+frontend/coverage
+
+# Production build
+frontend/dist/
+frontend/build/
+
+# Misc
+frontend/.DS_Store
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Logs npm
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# IDE
+frontend/.vscode/
+frontend/.idea/
+
+# ============================================================================
+# Scripts de déploiement (à garder dans Git)
+# ============================================================================
+
+# Ces fichiers DOIVENT être versionnés :
+# !install.sh
+# !deploy.sh
+# !db-manage.sh
+
+# ============================================================================
+# Sauvegardes et données temporaires
+# ============================================================================
+
+# Sauvegardes
+backups/*.db
+backups/*.sql
+backups/*.tar.gz
+backups/*.zip
+
+# Fichiers temporaires
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# ============================================================================
+# Système d'exploitation
+# ============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# ============================================================================
+# Éditeurs et IDEs
+# ============================================================================
+
+# VSCode
 .vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
 !.vscode/extensions.json
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# PyCharm
+.idea/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# ============================================================================
+# Certificats et clés (IMPORTANT - NE JAMAIS COMMITER)
+# ============================================================================
+
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+id_rsa
+id_rsa.pub
+*.secret
+
+# ============================================================================
+# Archives et packages
+# ============================================================================
+
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+
 .idea
 .DS_Store
 *.suo
@@ -21,3 +184,11 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# ============================================================================
+# Notes personnelles
+# ============================================================================
+
+TODO.md
+NOTES.md
+PRIVATE.md

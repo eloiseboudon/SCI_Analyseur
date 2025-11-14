@@ -6,15 +6,33 @@ import os
 import uuid
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
-from sqlalchemy import JSON, DateTime, String, create_engine, select
-from sqlalchemy.orm import Mapped, declarative_base, mapped_column, sessionmaker
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    create_engine,
+    event,
+    select,
+)
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import (
+    Mapped,
+    declarative_base,
+    mapped_column,
+    relationship,
+    sessionmaker,
+)
 
 app = Flask(__name__)
 
@@ -87,6 +105,16 @@ if DATABASE_URL.startswith("sqlite"):
     engine_kwargs["connect_args"] = {"check_same_thread": False}
 
 engine = create_engine(DATABASE_URL, **engine_kwargs)
+
+if DATABASE_URL.startswith("sqlite"):
+
+    @event.listens_for(Engine, "connect")
+    def enable_sqlite_foreign_keys(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
+
 SessionLocal = sessionmaker(
     bind=engine, autoflush=False, autocommit=False, expire_on_commit=False, future=True
 )
@@ -104,10 +132,220 @@ class Project(Base):
     indicateurs: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
     projection: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=False)
     excel_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
     )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+    )
+    fiscal_setting: Mapped[Optional["FiscalSetting"]] = relationship(
+        back_populates="project",
+        cascade="all, delete-orphan",
+        uselist=False,
+        single_parent=True,
+    )
+    properties: Mapped[List["Property"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan", single_parent=True
+    )
+    fiscal_incentives: Mapped[List["FiscalIncentive"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan", single_parent=True
+    )
+    calculation_results: Mapped[List["CalculationResult"]] = relationship(
+        back_populates="project", cascade="all, delete-orphan", single_parent=True
+    )
+
+
+class FiscalSetting(Base):
+    __tablename__ = "fiscal_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    project_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("projects.id", ondelete="CASCADE"), unique=True
+    )
+    annee_creation: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    capital_social: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    nombre_associes: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    projection_years: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    taux_vacance: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    indexation_loyers: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    inflation_charges: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    duree_amortissement_batiment: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )
+    duree_amortissement_travaux: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )
+    duree_amortissement_frais: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )
+    duree_amortissement_meubles: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )
+    travaux_gros_entretien_10ans: Mapped[Optional[float]] = mapped_column(
+        Float, nullable=True
+    )
+    travaux_gros_entretien_20ans: Mapped[Optional[float]] = mapped_column(
+        Float, nullable=True
+    )
+    crl_applicable: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
+    crl_taux: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    taux_interet_cca: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    apport_cca: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    project: Mapped[Project] = relationship(back_populates="fiscal_setting")
+
+
+class Property(Base):
+    __tablename__ = "properties"
+
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+    )
+    project_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
+    )
+    nom: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    annee_achat: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    age_immeuble: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    prix_achat: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    valeur_terrain: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    frais_notaire: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    frais_agence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    travaux_initiaux: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    meubles: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    apport_sci: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    project: Mapped[Project] = relationship(back_populates="properties")
+    loans: Mapped[List["Loan"]] = relationship(
+        back_populates="property", cascade="all, delete-orphan", single_parent=True
+    )
+    lots: Mapped[List["Lot"]] = relationship(
+        back_populates="property", cascade="all, delete-orphan", single_parent=True
+    )
+    charges: Mapped[Optional["PropertyCharge"]] = relationship(
+        back_populates="property",
+        cascade="all, delete-orphan",
+        uselist=False,
+        single_parent=True,
+    )
+
+
+class Loan(Base):
+    __tablename__ = "loans"
+
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+    )
+    property_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("properties.id", ondelete="CASCADE"), nullable=False
+    )
+    capital_emprunte: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    taux_interet: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    duree_annees: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    assurance_emprunteur_taux: Mapped[Optional[float]] = mapped_column(
+        Float, nullable=True
+    )
+    frais_dossier: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    frais_garantie: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    differe_partiel_mois: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    differe_total_mois: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    property: Mapped[Property] = relationship(back_populates="loans")
+
+
+class Lot(Base):
+    __tablename__ = "lots"
+
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+    )
+    property_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("properties.id", ondelete="CASCADE"), nullable=False
+    )
+    numero: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    loyer_mensuel: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    surface: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    charges_recuperables: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    property: Mapped[Property] = relationship(back_populates="lots")
+
+
+class PropertyCharge(Base):
+    __tablename__ = "property_charges"
+
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+    )
+    property_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("properties.id", ondelete="CASCADE"), nullable=False
+    )
+    taxe_fonciere: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    charges_copro: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    frais_comptable: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    assurance_pno: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    assurance_gli_taux: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    frais_gestion_taux: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    frais_entretien_annuel: Mapped[Optional[float]] = mapped_column(
+        Float, nullable=True
+    )
+    honoraires_gerant: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    property: Mapped[Property] = relationship(back_populates="charges")
+
+
+class FiscalIncentive(Base):
+    __tablename__ = "fiscal_incentives"
+
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+    )
+    project_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
+    )
+    name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
+    start_year: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    end_year: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    deduction_rate: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    project: Mapped[Project] = relationship(back_populates="fiscal_incentives")
+
+
+class CalculationResult(Base):
+    __tablename__ = "calculation_results"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    project_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
+    )
+    year_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    annee: Mapped[int] = mapped_column(Integer, nullable=False)
+    loyers: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    charges_recuperables: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    charges_exploitation: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    charges_financieres: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    amortissements_total: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    resultat_avant_is: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    impots_is: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    resultat_net: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    cash_flow: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    capital_pret: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    tresorerie_cumulee: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    tresorerie_bilan: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    mensualite_credit: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    actif_immobilise_brut: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    amortissements_cumules: Mapped[Optional[float]] = mapped_column(
+        Float, nullable=True
+    )
+    valeur_nette_comptable: Mapped[Optional[float]] = mapped_column(
+        Float, nullable=True
+    )
+    capitaux_propres: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    dette_restante: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    taxe_fonciere: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    charges_copro: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    frais_comptable: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    assurance_pno: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    assurance_gli: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    crl: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    cfe: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    project: Mapped[Project] = relationship(back_populates="calculation_results")
 
 
 try:

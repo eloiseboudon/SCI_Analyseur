@@ -87,7 +87,7 @@ export default function App() {
     setProjectsLoading(true);
     setListError(null);
     try {
-      const response = await fetch(`${baseUrl}/api/projects`);
+      const response = await fetch(`${baseUrl}/projects`);
       const body = await response.json();
       if (!response.ok || body.success === false) {
         throw new Error(body.error || `Erreur ${response.status}`);
@@ -139,8 +139,8 @@ export default function App() {
     try {
       const method = editingProjectId ? 'PUT' : 'POST';
       const url = editingProjectId
-        ? `${baseUrl}/api/projects/${editingProjectId}`
-        : `${baseUrl}/api/projects`;
+        ? `${baseUrl}/projects/${editingProjectId}`
+        : `${baseUrl}/projects`;
 
       const response = await fetch(url, {
         method,
@@ -178,7 +178,7 @@ export default function App() {
     setProjectAction({ id: projectId, type: 'view' });
     setActionError(null);
     try {
-      const response = await fetch(`${baseUrl}/api/projects/${projectId}`);
+      const response = await fetch(`${baseUrl}/projects/${projectId}`);
       const body = await response.json();
       if (!response.ok || body.success === false) {
         throw new Error(body.error || 'Impossible de charger le projet');
@@ -211,7 +211,7 @@ export default function App() {
     setProjectAction({ id: projectId, type: 'edit' });
     setActionError(null);
     try {
-      const response = await fetch(`${baseUrl}/api/projects/${projectId}`);
+      const response = await fetch(`${baseUrl}/projects/${projectId}`);
       const body = await response.json();
       if (!response.ok || body.success === false) {
         throw new Error(body.error || 'Impossible de charger le projet');
@@ -238,7 +238,7 @@ export default function App() {
     setProjectAction({ id: projectId, type: 'delete' });
     setActionError(null);
     try {
-      const response = await fetch(`${baseUrl}/api/projects/${projectId}`, {
+      const response = await fetch(`${baseUrl}/projects/${projectId}`, {
         method: 'DELETE',
       });
       const body = await response.json();
