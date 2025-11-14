@@ -160,6 +160,35 @@ export function DonutChart({ data, centerText, centerValue }: DonutChartProps) {
   };
 
   useEffect(() => {
+    if (!data || data.length === 0) {
+      setSegments([]);
+      return;
+    }
+
+    const total = data.reduce((sum, item) => sum + item.value, 0);
+    if (total === 0) {
+      setSegments([]);
+      return;
+    }
+
+    let currentAngle = -Math.PI / 2;
+    const computedSegments = data.map((item) => {
+      const angle = (item.value / total) * Math.PI * 2;
+      const segment: DonutSegment = {
+        label: item.label,
+        value: item.value,
+        color: item.color,
+        startAngle: currentAngle,
+        endAngle: currentAngle + angle,
+      };
+      currentAngle += angle;
+      return segment;
+    });
+
+    setSegments(computedSegments);
+  }, [data]);
+
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !data || data.length === 0) return;
 
