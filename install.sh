@@ -34,11 +34,31 @@ echo -e "${GREEN}✓${NC} Tous les prérequis sont installés"
 # 2. Cloner le repository
 echo -e "\n${YELLOW}[2/9]${NC} Clonage du repository GitHub..."
 cd /home/ubuntu
-if [ -d "$APP_DIR/.git" ]; then
-    echo -e "${YELLOW}⚠${NC}  Le repository existe déjà, mise à jour..."
+
+# Si le répertoire existe déjà
+if [ -d "$APP_DIR" ]; then
+    echo -e "${YELLOW}⚠${NC}  Le répertoire existe déjà..."
     cd $APP_DIR
-    git fetch origin
-    git reset --hard origin/$BRANCH
+    
+    # Si c'est un repo git, le mettre à jour
+    if [ -d ".git" ]; then
+        echo -e "${YELLOW}→${NC}  Mise à jour du repository existant..."
+        git fetch origin
+        git reset --hard origin/$BRANCH
+    else
+        # Sinon, initialiser git et récupérer le code
+        echo -e "${YELLOW}→${NC}  Initialisation du repository..."
+        # Sauvegarder les scripts locaux
+        cp install.sh deploy.sh db-manage.sh /tmp/ 2>/dev/null || true
+        
+        git init
+        git remote add origin $REPO_URL
+        git fetch origin
+        git checkout -b $BRANCH origin/$BRANCH
+        
+        # Restaurer les scripts
+        cp /tmp/install.sh /tmp/deploy.sh /tmp/db-manage.sh . 2>/dev/null || true
+    fi
 else
     git clone -b $BRANCH $REPO_URL immometrics
     cd $APP_DIR
@@ -82,21 +102,17 @@ echo -e "${GREEN}✓${NC} Backend configuré"
 
 # 4. Initialiser la base de données
 echo -e "\n${YELLOW}[4/9]${NC} Initialisation de la base de données SQLite..."
-source .venv/bin/activate
-python3 << PYTHON_SCRIPT
-from models import init_db
-import os
 
-db_path = "$APP_DIR/backend/data/sci_analyzer.db"
-if not os.path.exists(db_path):
-    print("Création de la base de données...")
-    init_db()
-    print("Base de données créée avec succès !")
-else:
-    print("La base de données existe déjà.")
-PYTHON_SCRIPT
-deactivate
-echo -e "${GREEN}✓${NC} Base de données initialisée"
+# La base de données sera créée automatiquement par web_app.py au premier démarrage
+# Pas besoin d'initialisation manuelle avec ce projet
+
+if [ ! -f "$APP_DIR/backend/data/sci_analyzer.db" ]; then
+    echo -e "${YELLOW}→${NC} La base de données sera créée au premier démarrage du backend"
+else
+    echo -e "${GREEN}✓${NC} La base de données existe déjà"
+fi
+
+echo -e "${GREEN}✓${NC} Configuration de la base de données OK"
 
 # 5. Configuration du Frontend
 echo -e "\n${YELLOW}[5/9]${NC} Configuration du frontend React..."
