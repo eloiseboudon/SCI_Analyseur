@@ -1,16 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Zap,
-  TrendingUp,
+  Download,
+  Edit2,
+  Eye,
+  Info,
   PlusCircle,
   RefreshCw,
-  Eye,
-  Edit2,
-  Download,
   Trash2,
+  TrendingUp,
+  X,
+  Zap,
 } from 'lucide-react';
-import { SCIForm } from './components/SCIForm';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DarkResultsTabs } from './components/DarkResultsTabs';
+import { SCIForm } from './components/SCIForm';
 
 type ViewState = 'list' | 'form' | 'results';
 
@@ -61,7 +63,7 @@ const downloadExcelFile = async (url: string, filename?: string) => {
 
 export default function App() {
   const baseUrl = useMemo(() => {
-    const raw = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:5000';
+    const raw = (import.meta.env.VITE_API_URL as string | undefined) || 'http://localhost:5010';
     return raw.replace(/\/$/, '');
   }, []);
 
@@ -79,6 +81,7 @@ export default function App() {
   const [formInitialRevenus, setFormInitialRevenus] = useState<any[] | undefined>(undefined);
   const [projectAction, setProjectAction] = useState<{ id: string; type: 'view' | 'edit' | 'delete' } | null>(null);
   const [downloadingProjectId, setDownloadingProjectId] = useState<string | null>(null);
+  const [showExplanation, setShowExplanation] = useState(false);
 
   const fetchProjects = useCallback(async () => {
     setProjectsLoading(true);
@@ -102,6 +105,24 @@ export default function App() {
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
+
+  useEffect(() => {
+    if (!showExplanation) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowExplanation(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showExplanation]);
 
   const handleCreateProject = () => {
     setEditingProjectId(null);
@@ -135,7 +156,7 @@ export default function App() {
       }
 
       const projectId = body.project_id || body.project?.id || editingProjectId;
-      setResults({ ...body, id: projectId, apiBaseUrl: baseUrl });
+      setResults({ ...body, id: projectId, project_id: projectId, apiBaseUrl: baseUrl });
       setEditingProjectId(projectId || null);
       setView('results');
       await fetchProjects();
@@ -320,7 +341,19 @@ export default function App() {
             const isDeleting = projectAction?.id === project.id && projectAction?.type === 'delete';
 
             return (
-              <div key={project.id} className="glass-darker border border-slate-700 rounded-xl p-6">
+              <div
+                key={project.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => handleViewProject(project.id)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    handleViewProject(project.id);
+                  }
+                }}
+                className="glass-darker border border-slate-700 rounded-xl p-6 transition-all cursor-pointer hover:border-cyan-500/70 hover:shadow-cyan-500/10 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-cyan-400"
+              >
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div className="space-y-2">
                     <h3 className="text-lg font-semibold text-slate-100">{project.nom_sci}</h3>
@@ -350,41 +383,49 @@ export default function App() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
-                      onClick={() => handleViewProject(project.id)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleViewProject(project.id);
+                      }}
                       disabled={isViewing}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-600 text-slate-200 hover:border-cyan-500 hover:text-white ${
-                        isViewing ? 'opacity-60 cursor-not-allowed' : ''
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-600 text-slate-200 hover:border-cyan-500 hover:text-white ${isViewing ? 'opacity-60 cursor-not-allowed' : ''
+                        }`}
                     >
                       <Eye className="w-4 h-4" />
                       {isViewing ? 'Ouverture…' : 'Consulter'}
                     </button>
                     <button
-                      onClick={() => handleEditProject(project.id)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleEditProject(project.id);
+                      }}
                       disabled={isEditing}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-600 text-slate-200 hover:border-cyan-500 hover:text-white ${
-                        isEditing ? 'opacity-60 cursor-not-allowed' : ''
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-600 text-slate-200 hover:border-cyan-500 hover:text-white ${isEditing ? 'opacity-60 cursor-not-allowed' : ''
+                        }`}
                     >
                       <Edit2 className="w-4 h-4" />
                       {isEditing ? 'Chargement…' : 'Modifier'}
                     </button>
                     <button
-                      onClick={() => handleExportProject(project)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleExportProject(project);
+                      }}
                       disabled={downloadingProjectId === project.id}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-emerald-600/50 text-emerald-200 hover:border-emerald-400 hover:text-white ${
-                        downloadingProjectId === project.id ? 'opacity-60 cursor-not-allowed' : ''
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-emerald-600/50 text-emerald-200 hover:border-emerald-400 hover:text-white ${downloadingProjectId === project.id ? 'opacity-60 cursor-not-allowed' : ''
+                        }`}
                     >
                       <Download className="w-4 h-4" />
                       {downloadingProjectId === project.id ? 'Export…' : 'Exporter'}
                     </button>
                     <button
-                      onClick={() => handleDeleteProject(project.id)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDeleteProject(project.id);
+                      }}
                       disabled={isDeleting}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-red-600/50 text-red-200 hover:border-red-400 hover:text-white ${
-                        isDeleting ? 'opacity-60 cursor-not-allowed' : ''
-                      }`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-red-600/50 text-red-200 hover:border-red-400 hover:text-white ${isDeleting ? 'opacity-60 cursor-not-allowed' : ''
+                        }`}
                     >
                       <Trash2 className="w-4 h-4" />
                       {isDeleting ? 'Suppression…' : 'Supprimer'}
@@ -440,19 +481,31 @@ export default function App() {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <header className="glass-darker border-b border-cyan-500/20">
         <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center gap-3">
-            <div className="glass-dark neon-border-cyan p-3 rounded-xl">
-              <Zap className="w-8 h-8 text-cyan-400" />
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="glass-dark neon-border-cyan p-3 rounded-xl">
+                <Zap className="w-8 h-8 text-cyan-400" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold neon-text-cyan flex items-center gap-2">
+                  Analyseur SCI Premium
+                  <TrendingUp className="w-6 h-6 text-cyan-400" />
+                </h1>
+                <p className="text-sm text-slate-400">
+                  Pilotage multi-projets • Calculs 30 ans • Export Excel instantané
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold neon-text-cyan flex items-center gap-2">
-                Analyseur SCI Premium
-                <TrendingUp className="w-6 h-6 text-cyan-400" />
-              </h1>
-              <p className="text-sm text-slate-400">
-                Pilotage multi-projets • Calculs 30 ans • Export Excel instantané
-              </p>
-            </div>
+            <button
+              type="button"
+              onClick={() => setShowExplanation(true)}
+              className="flex items-center justify-center gap-2 px-4 py-2 glass-dark border border-cyan-500/40 text-cyan-200 rounded-lg hover:border-cyan-400 hover:text-white transition-colors"
+              aria-haspopup="dialog"
+              aria-expanded={showExplanation}
+            >
+              <Info className="w-4 h-4" />
+              Comprendre les calculs
+            </button>
           </div>
         </div>
       </header>
@@ -460,8 +513,85 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-6 py-8">
         {view === 'list' && renderProjectList()}
         {view === 'form' && renderForm()}
-        {view === 'results' && results && <DarkResultsTabs data={results} onBack={handleResultsBack} />}
+        {view === 'results' && results && (
+          <DarkResultsTabs
+            data={results}
+            onBack={handleResultsBack}
+            onEdit={() => results?.id && handleEditProject(results.id)}
+          />
+        )}
       </main>
+
+      {showExplanation && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-950/80 backdrop-blur-md"
+          role="presentation"
+          onClick={() => setShowExplanation(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="explication-calculs-titre"
+            className="relative w-full max-w-3xl glass-darker border border-cyan-500/30 rounded-2xl p-6 text-slate-100"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowExplanation(false)}
+              className="absolute right-4 top-4 text-slate-400 hover:text-white"
+              aria-label="Fermer l'explication des calculs"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="space-y-4 pr-6">
+              <h2 id="explication-calculs-titre" className="text-xl font-semibold text-cyan-200">
+                Comment sont réalisés nos calculs ?
+              </h2>
+              <p className="text-sm text-slate-300 leading-relaxed">
+                Chaque simulation vise à offrir une vision fiable et cohérente des performances de votre SCI.
+                Les indicateurs principaux sont obtenus à partir des données que vous renseignez dans le formulaire.
+              </p>
+              <ul className="space-y-3 text-sm text-slate-200 list-disc list-inside">
+                <li>
+                  <strong>Rendement brut&nbsp;:</strong> loyers annuels TTC ÷ coût total du projet (prix, frais, travaux).
+                </li>
+                <li>
+                  <strong>Rendement net-net&nbsp;:</strong> loyers nets des charges récurrentes, fiscalité estimée et
+                  provisions, rapportés au capital initial engagé.
+                </li>
+                <li>
+                  <strong>TRI (taux de rendement interne)&nbsp;:</strong> calculé sur 30&nbsp;ans en intégrant flux de
+                  trésorerie et valeur de revente revalorisée selon votre hypothèse.
+                </li>
+                <li>
+                  <strong>Cash-flow mensuel et cumulé&nbsp;:</strong> différence entre encaissements (loyers, revente) et
+                  décaissements (crédit, charges, impôts) période par période.
+                </li>
+              </ul>
+              <p className="text-sm text-slate-300 leading-relaxed">
+                Les projections financières utilisent un calendrier mensuel&nbsp;: amortissement du prêt, évolution des
+                loyers, indexation des charges et impôts sont recalculés pour chaque année. Les hypothèses peuvent être
+                affinées en modifiant les paramètres de différé, d&apos;indexation ou de fiscalité dans le formulaire.
+              </p>
+              <div className="glass-dark border border-cyan-500/20 rounded-xl p-4 text-sm text-slate-200">
+                <p>
+                  <strong>Bonne pratique&nbsp;:</strong> vérifiez la cohérence des taux (assurance, fiscalité, revalorisation)
+                  avec votre contexte bancaire et comptable pour obtenir une projection réaliste.
+                </p>
+              </div>
+              <div className="flex justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowExplanation(false)}
+                  className="px-4 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-500"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

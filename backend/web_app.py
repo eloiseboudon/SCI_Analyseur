@@ -1,4 +1,5 @@
 """Flask application exposing SCI analysis via HTTP API."""
+
 from __future__ import annotations
 
 import os
@@ -14,7 +15,6 @@ from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 from sqlalchemy import JSON, DateTime, String, create_engine, select
 from sqlalchemy.orm import Mapped, declarative_base, mapped_column, sessionmaker
-
 
 app = Flask(__name__)
 
@@ -62,10 +62,13 @@ def ensure_cors_headers(response):
         if request_headers:
             response.headers.setdefault("Access-Control-Allow-Headers", request_headers)
         else:
-            response.headers.setdefault("Access-Control-Allow-Headers", "Content-Type, Authorization")
+            response.headers.setdefault(
+                "Access-Control-Allow-Headers", "Content-Type, Authorization"
+            )
         response.headers.setdefault("Access-Control-Max-Age", "86400")
 
     return response
+
 
 REPORTS_DIR = Path(__file__).resolve().parent / "reports"
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -84,26 +87,35 @@ if DATABASE_URL.startswith("sqlite"):
     engine_kwargs["connect_args"] = {"check_same_thread": False}
 
 engine = create_engine(DATABASE_URL, **engine_kwargs)
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False, future=True)
+SessionLocal = sessionmaker(
+    bind=engine, autoflush=False, autocommit=False, expire_on_commit=False, future=True
+)
 Base = declarative_base()
 
 
 class Project(Base):
     __tablename__ = "projects"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+    )
     nom_sci: Mapped[str] = mapped_column(String(255), nullable=False)
     payload: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
     indicateurs: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
     projection: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=False)
     excel_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
 
 try:
     Base.metadata.create_all(engine)
 except Exception as exc:  # pragma: no cover - defensive startup guard
-    raise RuntimeError("Impossible d'initialiser la base de données PostgreSQL") from exc
+    raise RuntimeError(
+        "Impossible d'initialiser la base de données PostgreSQL"
+    ) from exc
 
 
 @contextmanager
@@ -119,16 +131,28 @@ def session_scope():
         session.close()
 
 
-def serialize_project(project: Project, *, include_payload: bool = False, include_projection: bool = False) -> Dict[str, Any]:
+def serialize_project(
+    project: Project, *, include_payload: bool = False, include_projection: bool = False
+) -> Dict[str, Any]:
     data: Dict[str, Any] = {
         "id": project.id,
         "nom_sci": project.nom_sci,
         "created_at": project.created_at.isoformat() if project.created_at else None,
         "updated_at": project.updated_at.isoformat() if project.updated_at else None,
-        "excel_url": f"/api/projects/{project.id}/export" if project.excel_filename else None,
+        "excel_url": (
+            f"/api/projects/{project.id}/export" if project.excel_filename else None
+        ),
         "indicateurs": project.indicateurs,
-        "annee_creation": project.payload.get("annee_creation") if isinstance(project.payload, dict) else None,
-        "nombre_associes": project.payload.get("nombre_associes") if isinstance(project.payload, dict) else None,
+        "annee_creation": (
+            project.payload.get("annee_creation")
+            if isinstance(project.payload, dict)
+            else None
+        ),
+        "nombre_associes": (
+            project.payload.get("nombre_associes")
+            if isinstance(project.payload, dict)
+            else None
+        ),
     }
 
     if include_payload:
@@ -169,7 +193,9 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
         return default
 
 
-def build_loan_schedule(capital: float, rate_percent: float, duration_years: int) -> LoanSchedule:
+def build_loan_schedule(
+    capital: float, rate_percent: float, duration_years: int
+) -> LoanSchedule:
     """Compute yearly interest, principal and remaining balance for a loan."""
 
     months = max(int(duration_years) * 12, 1)
@@ -226,7 +252,9 @@ def build_loan_schedule(capital: float, rate_percent: float, duration_years: int
         principal_per_year.append(0.0)
         balance_per_year.append(last_balance)
 
-    return LoanSchedule(interest_per_year, principal_per_year, balance_per_year, monthly_payment)
+    return LoanSchedule(
+        interest_per_year, principal_per_year, balance_per_year, monthly_payment
+    )
 
 
 def compute_is(amount: float) -> float:
@@ -242,7 +270,9 @@ def format_percent(value: float) -> str:
     return f"{value:.2f}%"
 
 
-def generate_excel_report(indicateurs: Dict[str, Any], projection: List[Dict[str, Any]], output_path: Path) -> None:
+def generate_excel_report(
+    indicateurs: Dict[str, Any], projection: List[Dict[str, Any]], output_path: Path
+) -> None:
     """Create a simple Excel workbook containing indicators and yearly projection."""
 
     df_projection = pd.DataFrame(projection)
@@ -261,8 +291,12 @@ def analyse_projet(payload: Dict[str, Any]) -> Dict[str, Any]:
     revenus_annexes = payload.get("revenus_annexes", []) or []
 
     base_rent = sum(_safe_float(app.get("loyer_mensuel")) for app in appartements) * 12
-    base_charges_recup = sum(_safe_float(app.get("charges_recuperables")) for app in appartements) * 12
-    annex_income = sum(_safe_float(annex.get("montant_annuel")) for annex in revenus_annexes)
+    base_charges_recup = (
+        sum(_safe_float(app.get("charges_recuperables")) for app in appartements) * 12
+    )
+    annex_income = sum(
+        _safe_float(annex.get("montant_annuel")) for annex in revenus_annexes
+    )
 
     taux_vacance = _safe_float(payload.get("taux_vacance"), 0.0) / 100.0
     rent_indexation = _safe_float(payload.get("indexation_loyers"), 0.0) / 100.0
@@ -293,7 +327,9 @@ def analyse_projet(payload: Dict[str, Any]) -> Dict[str, Any]:
     duree_pret = int(payload.get("duree_pret", 20))
     frais_dossier = _safe_float(payload.get("frais_dossier"))
     frais_garantie = _safe_float(payload.get("frais_garantie"))
-    assurance_emprunteur_taux = _safe_float(payload.get("assurance_emprunteur_taux")) / 100.0
+    assurance_emprunteur_taux = (
+        _safe_float(payload.get("assurance_emprunteur_taux")) / 100.0
+    )
 
     taxe_fonciere = _safe_float(payload.get("taxe_fonciere"))
     charges_copro = _safe_float(payload.get("charges_copro_annuelles"))
@@ -321,7 +357,9 @@ def analyse_projet(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     loan_schedule = build_loan_schedule(capital_emprunte, taux_interet, duree_pret)
 
-    investissement_total = prix_achat + frais_notaire + frais_agence + travaux_initiaux + meubles
+    investissement_total = (
+        prix_achat + frais_notaire + frais_agence + travaux_initiaux + meubles
+    )
     apport_total = apport + apport_cca + capital_social
 
     tresorerie_cumulee = -apport_total
@@ -355,19 +393,50 @@ def analyse_projet(payload: Dict[str, Any]) -> Dict[str, Any]:
         frais_exceptionnels = frais_dossier + frais_garantie if year_index == 0 else 0.0
 
         charges_exploitation = (
-            taxe + copro + comptable + pno + gli + gestion + entretien + gerant + crl + cfe + gros_entretien + frais_exceptionnels
+            taxe
+            + copro
+            + comptable
+            + pno
+            + gli
+            + gestion
+            + entretien
+            + gerant
+            + crl
+            + cfe
+            + gros_entretien
+            + frais_exceptionnels
         )
 
         assurance_emprunt = capital_emprunte * assurance_emprunteur_taux
         cca_interets = apport_cca * taux_interet_cca
-        interets = loan_schedule.interest_per_year[year_index] if year_index < len(loan_schedule.interest_per_year) else 0.0
+        interets = (
+            loan_schedule.interest_per_year[year_index]
+            if year_index < len(loan_schedule.interest_per_year)
+            else 0.0
+        )
         charges_financieres = interets + assurance_emprunt + cca_interets
 
-        amort_batiment = amort_base_bat / duree_amort_bat if year_index < duree_amort_bat else 0.0
-        amort_travaux = amort_base_travaux / duree_amort_travaux if year_index < duree_amort_travaux else 0.0
-        amort_frais = amort_base_frais / duree_amort_frais if year_index < duree_amort_frais else 0.0
-        amort_meubles = amort_base_meubles / duree_amort_meubles if year_index < duree_amort_meubles else 0.0
-        amortissements_total = amort_batiment + amort_travaux + amort_frais + amort_meubles
+        amort_batiment = (
+            amort_base_bat / duree_amort_bat if year_index < duree_amort_bat else 0.0
+        )
+        amort_travaux = (
+            amort_base_travaux / duree_amort_travaux
+            if year_index < duree_amort_travaux
+            else 0.0
+        )
+        amort_frais = (
+            amort_base_frais / duree_amort_frais
+            if year_index < duree_amort_frais
+            else 0.0
+        )
+        amort_meubles = (
+            amort_base_meubles / duree_amort_meubles
+            if year_index < duree_amort_meubles
+            else 0.0
+        )
+        amortissements_total = (
+            amort_batiment + amort_travaux + amort_frais + amort_meubles
+        )
         amortissements_cumules += amortissements_total
 
         resultat_exploitation = loyers - charges_exploitation - amortissements_total
@@ -375,43 +444,60 @@ def analyse_projet(payload: Dict[str, Any]) -> Dict[str, Any]:
         is_amount = compute_is(resultat_avant_is)
         resultat_net = resultat_avant_is - is_amount
 
-        capital_pret = loan_schedule.principal_per_year[year_index] if year_index < len(loan_schedule.principal_per_year) else 0.0
-        cash_flow = loyers + charges_recup - charges_exploitation - charges_financieres - capital_pret - is_amount
+        capital_pret = (
+            loan_schedule.principal_per_year[year_index]
+            if year_index < len(loan_schedule.principal_per_year)
+            else 0.0
+        )
+        cash_flow = (
+            loyers
+            + charges_recup
+            - charges_exploitation
+            - charges_financieres
+            - capital_pret
+            - is_amount
+        )
         tresorerie_cumulee += cash_flow
 
         actif_brut = investissement_total
         valeur_nette_comptable = max(actif_brut - amortissements_cumules, 0.0)
-        dette_restante = loan_schedule.balance_per_year[year_index] if year_index < len(loan_schedule.balance_per_year) else 0.0
+        dette_restante = (
+            loan_schedule.balance_per_year[year_index]
+            if year_index < len(loan_schedule.balance_per_year)
+            else 0.0
+        )
         capitaux_propres = valeur_nette_comptable + tresorerie_cumulee - dette_restante
 
-        projection.append({
-            "annee": annee,
-            "loyers": loyers,
-            "charges_recuperables": charges_recup,
-            "charges_exploitation": charges_exploitation,
-            "charges_financieres": charges_financieres,
-            "amortissements_total": amortissements_total,
-            "resultat_avant_is": resultat_avant_is,
-            "is": is_amount,
-            "resultat_net": resultat_net,
-            "cash_flow": cash_flow,
-            "capital_pret": capital_pret,
-            "tresorerie_cumulee": tresorerie_cumulee,
-            "tresorerie_bilan": tresorerie_cumulee,
-            "mensualite_credit": loan_schedule.monthly_payment * 12,
-            "actif_immobilise_brut": actif_brut,
-            "amortissements_cumules": amortissements_cumules,
-            "valeur_nette_comptable": valeur_nette_comptable,
-            "capitaux_propres": capitaux_propres,
-            "dette_restante": dette_restante,
-            "taxe_fonciere": taxe,
-            "charges_copro": copro,
-            "frais_comptable": comptable,
-            "assurance_pno": pno,
-            "assurance_gli": gli,
-            "crl": crl,
-            "cfe": cfe,
-        })
+        projection.append(
+            {
+                "annee": annee,
+                "loyers": loyers,
+                "charges_recuperables": charges_recup,
+                "charges_exploitation": charges_exploitation,
+                "charges_financieres": charges_financieres,
+                "amortissements_total": amortissements_total,
+                "resultat_avant_is": resultat_avant_is,
+                "is": is_amount,
+                "resultat_net": resultat_net,
+                "cash_flow": cash_flow,
+                "capital_pret": capital_pret,
+                "tresorerie_cumulee": tresorerie_cumulee,
+                "tresorerie_bilan": tresorerie_cumulee,
+                "mensualite_credit": loan_schedule.monthly_payment * 12,
+                "actif_immobilise_brut": actif_brut,
+                "amortissements_cumules": amortissements_cumules,
+                "valeur_nette_comptable": valeur_nette_comptable,
+                "capitaux_propres": capitaux_propres,
+                "dette_restante": dette_restante,
+                "taxe_fonciere": taxe,
+                "charges_copro": copro,
+                "frais_comptable": comptable,
+                "assurance_pno": pno,
+                "assurance_gli": gli,
+                "crl": crl,
+                "cfe": cfe,
+            }
+        )
 
     cash_flow_cumule_final = projection[-1]["tresorerie_cumulee"] if projection else 0.0
     total_loyers = sum(item["loyers"] for item in projection)
@@ -421,13 +507,27 @@ def analyse_projet(payload: Dict[str, Any]) -> Dict[str, Any]:
     charges_initial = projection[0]["charges_exploitation"] if projection else 0.0
     resultat_net_initial = projection[0]["resultat_net"] if projection else 0.0
 
-    rendement_brut = format_percent((loyers_initial / investissement_total * 100) if investissement_total else 0.0)
-    rendement_net = format_percent(((loyers_initial - charges_initial) / investissement_total * 100) if investissement_total else 0.0)
-    rendement_net_net = format_percent((resultat_net_initial / apport_total * 100) if apport_total else 0.0)
+    rendement_brut = format_percent(
+        (loyers_initial / investissement_total * 100) if investissement_total else 0.0
+    )
+    rendement_net = format_percent(
+        ((loyers_initial - charges_initial) / investissement_total * 100)
+        if investissement_total
+        else 0.0
+    )
+    rendement_net_net = format_percent(
+        (resultat_net_initial / apport_total * 100) if apport_total else 0.0
+    )
 
     base_roi_denominator = apport_total if apport_total else investissement_total
-    taux_retour_investissement = format_percent((cash_flow_cumule_final / base_roi_denominator * 100) if base_roi_denominator else 0.0)
-    taux_endettement = format_percent((capital_emprunte / investissement_total * 100) if investissement_total else 0.0)
+    taux_retour_investissement = format_percent(
+        (cash_flow_cumule_final / base_roi_denominator * 100)
+        if base_roi_denominator
+        else 0.0
+    )
+    taux_endettement = format_percent(
+        (capital_emprunte / investissement_total * 100) if investissement_total else 0.0
+    )
 
     delai_rentabilite = None
     for index, item in enumerate(projection, start=1):
@@ -449,7 +549,11 @@ def analyse_projet(payload: Dict[str, Any]) -> Dict[str, Any]:
         "loyers_annuels_initial": loyers_initial,
         "cash_flow_cumule_30ans": cash_flow_cumule_final,
         "tresorerie_finale": cash_flow_cumule_final,
-        "delai_rentabilite": delai_rentabilite if delai_rentabilite is not None else ">" + str(projection_years),
+        "delai_rentabilite": (
+            delai_rentabilite
+            if delai_rentabilite is not None
+            else ">" + str(projection_years)
+        ),
     }
 
     return {
@@ -522,7 +626,9 @@ def create_project() -> Tuple[str, int]:
 
     project_id = str(uuid.uuid4())
     excel_filename = f"projet_{project_id}.xlsx"
-    generate_excel_report(analysis["indicateurs"], analysis["projection"], REPORTS_DIR / excel_filename)
+    generate_excel_report(
+        analysis["indicateurs"], analysis["projection"], REPORTS_DIR / excel_filename
+    )
 
     with session_scope() as session:
         project = Project(
@@ -540,7 +646,9 @@ def create_project() -> Tuple[str, int]:
         **analysis,
         "project_id": project_id,
         "excel_url": f"/api/projects/{project_id}/export",
-        "project": serialize_project(project, include_payload=True, include_projection=True),
+        "project": serialize_project(
+            project, include_payload=True, include_projection=True
+        ),
     }
 
     return jsonify(response), 201
@@ -586,9 +694,15 @@ def update_project(project_id: str) -> Tuple[str, int]:
         delete_excel_file(project.excel_filename)
 
         excel_filename = f"projet_{project_id}.xlsx"
-        generate_excel_report(analysis["indicateurs"], analysis["projection"], REPORTS_DIR / excel_filename)
+        generate_excel_report(
+            analysis["indicateurs"],
+            analysis["projection"],
+            REPORTS_DIR / excel_filename,
+        )
 
-        project.nom_sci = analysis.get("nom_sci") or payload.get("nom_sci") or project.nom_sci
+        project.nom_sci = (
+            analysis.get("nom_sci") or payload.get("nom_sci") or project.nom_sci
+        )
         project.payload = payload
         project.indicateurs = analysis["indicateurs"]
         project.projection = analysis["projection"]
@@ -601,7 +715,9 @@ def update_project(project_id: str) -> Tuple[str, int]:
         **analysis,
         "project_id": project_id,
         "excel_url": f"/api/projects/{project_id}/export",
-        "project": serialize_project(project, include_payload=True, include_projection=True),
+        "project": serialize_project(
+            project, include_payload=True, include_projection=True
+        ),
     }
 
     return jsonify(response), 200
@@ -646,8 +762,13 @@ def download_excel(report_id: str):
     if not path or not path.exists():
         return jsonify({"success": False, "error": "Rapport introuvable"}), 404
 
-    return send_file(path, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", as_attachment=True, download_name=path.name)
+    return send_file(
+        path,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name=path.name,
+    )
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5010, debug=True)
