@@ -590,8 +590,8 @@ function DarkTimelineCard({ year, title, stats, neonClass }: any) {
   return (
     <div className={`glass-darker ${neonClass} rounded-xl p-4`}>
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-10 h-10 glass-dark border border-slate-600 rounded-full flex items-center justify-center font-bold text-sm gold-accent">
-          {year}
+        <div className="w-10 h-10 glass-dark border border-slate-600 rounded-full flex items-center justify-center font-bold text-sm gold-accent leading-none">
+          <span className="flex items-center justify-center w-full h-full">{year}</span>
         </div>
         <h4 className="font-bold text-slate-200">{title}</h4>
       </div>
