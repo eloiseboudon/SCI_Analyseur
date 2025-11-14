@@ -1,16 +1,17 @@
+import { ArrowLeft, BarChart3, Brain, Building2, Download, Edit2, FileText, TrendingUp, Wallet, Zap } from 'lucide-react';
 import { useState } from 'react';
-import { ArrowLeft, TrendingUp, FileText, Wallet, Building2, BarChart3, Download, Zap, Brain } from 'lucide-react';
-import { LineChart, DonutChart, BarChart } from './ChartComponents';
 import { AIProjectAnalysis } from './AIProjectAnalysis';
+import { BarChart, DonutChart, LineChart } from './ChartComponents';
 
 interface DarkResultsTabsProps {
   data: any;
   onBack: () => void;
+  onEdit?: () => void;
 }
 
 type TabType = 'synthese' | 'ai_analysis' | 'compte_resultat' | 'tresorerie' | 'bilan' | 'details';
 
-export function DarkResultsTabs({ data, onBack }: DarkResultsTabsProps) {
+export function DarkResultsTabs({ data, onBack, onEdit }: DarkResultsTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>('synthese');
   const [downloading, setDownloading] = useState(false);
 
@@ -107,14 +108,25 @@ export function DarkResultsTabs({ data, onBack }: DarkResultsTabsProps) {
                 <p className="text-xs text-slate-500">Analyse professionnelle • 30 ans</p>
               </div>
             </div>
-            <button
-              onClick={handleDownload}
-              disabled={downloading}
-              className={`flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-zinc-900 to-black border-gold text-white rounded-xl transition-all border border-emerald-600/40 font-semibold ${downloading ? 'opacity-60 cursor-not-allowed' : 'hover:from-emerald-500 hover:to-cyan-500'}`}
-            >
-              <Download className="w-4 h-4" />
-              {downloading ? 'Téléchargement…' : 'Export Excel'}
-            </button>
+            <div className="flex items-center gap-3">
+              {onEdit && (
+                <button
+                  onClick={onEdit}
+                  className="flex items-center gap-2 px-5 py-2.5 glass-dark border border-cyan-500/40 text-cyan-200 rounded-xl hover:border-cyan-400 hover:text-white transition-all"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  Modifier le projet
+                </button>
+              )}
+              <button
+                onClick={handleDownload}
+                disabled={downloading}
+                className={`flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-zinc-900 to-black border-gold text-white rounded-xl transition-all border border-emerald-600/40 font-semibold ${downloading ? 'opacity-60 cursor-not-allowed' : 'hover:from-emerald-500 hover:to-cyan-500'}`}
+              >
+                <Download className="w-4 h-4" />
+                {downloading ? 'Téléchargement…' : 'Export Excel'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -130,11 +142,10 @@ export function DarkResultsTabs({ data, onBack }: DarkResultsTabsProps) {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as TabType)}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
-                    isActive
-                      ? `glass-dark ${tab.neon} gold-accent`
-                      : 'text-slate-400 hover:text-slate-200 hover:glass-dark'
-                  }`}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${isActive
+                    ? `glass-dark ${tab.neon} gold-accent`
+                    : 'text-slate-400 hover:text-slate-200 hover:glass-dark'
+                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   {tab.label}
@@ -326,9 +337,8 @@ function CompteResultatTab({ projection }: any) {
             {projection.map((annee: any, idx: number) => (
               <tr
                 key={annee.annee}
-                className={`border-b border-slate-800 hover:bg-slate-800/50 transition-colors ${
-                  idx % 5 === 4 ? 'border-b-2 border-slate-700' : ''
-                }`}
+                className={`border-b border-slate-800 hover:bg-slate-800/50 transition-colors ${idx % 5 === 4 ? 'border-b-2 border-slate-700' : ''
+                  }`}
               >
                 <td className="py-2.5 px-3 font-bold text-slate-300">{annee.annee}</td>
                 <td className="py-2.5 px-3 text-right text-emerald-400 font-medium">{(annee.loyers || 0).toLocaleString()}</td>
@@ -337,9 +347,8 @@ function CompteResultatTab({ projection }: any) {
                 <td className="py-2.5 px-3 text-right text-yellow-400">-{(annee.amortissements_total || 0).toLocaleString()}</td>
                 <td className="py-2.5 px-3 text-right font-bold gold-accent">{(annee.resultat_avant_is || 0).toLocaleString()}</td>
                 <td className="py-2.5 px-3 text-right text-red-400">-{(annee.is || 0).toLocaleString()}</td>
-                <td className={`py-2.5 px-3 text-right font-bold ${
-                  (annee.resultat_net || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'
-                }`}>
+                <td className={`py-2.5 px-3 text-right font-bold ${(annee.resultat_net || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'
+                  }`}>
                   {(annee.resultat_net || 0).toLocaleString()}
                 </td>
               </tr>
@@ -351,7 +360,7 @@ function CompteResultatTab({ projection }: any) {
   );
 }
 
-function TresorerieTab({ projection, indicateurs }: any) {
+function TresorerieTab({ projection }: any) {
   const breakEven = projection.findIndex((a: any) => a.tresorerie_cumulee >= 0);
   const minTreso = Math.min(...projection.map((a: any) => a.tresorerie_cumulee || 0));
 
@@ -404,22 +413,19 @@ function TresorerieTab({ projection, indicateurs }: any) {
                 return (
                   <tr
                     key={annee.annee}
-                    className={`border-b border-slate-800 hover:bg-slate-800/50 transition-colors ${
-                      idx % 5 === 4 ? 'border-b-2 border-slate-700' : ''
-                    }`}
+                    className={`border-b border-slate-800 hover:bg-slate-800/50 transition-colors ${idx % 5 === 4 ? 'border-b-2 border-slate-700' : ''
+                      }`}
                   >
                     <td className="py-2.5 px-3 font-bold text-slate-300">{annee.annee}</td>
                     <td className="py-2.5 px-3 text-right text-emerald-400 font-medium">+{encaiss.toLocaleString()}</td>
                     <td className="py-2.5 px-3 text-right text-red-400">-{decaiss.toLocaleString()}</td>
                     <td className="py-2.5 px-3 text-right text-orange-400">-{(annee.capital_pret || 0).toLocaleString()}</td>
-                    <td className={`py-2.5 px-3 text-right font-bold ${
-                      (annee.cash_flow || 0) >= 0 ? 'gold-accent' : 'text-red-400'
-                    }`}>
+                    <td className={`py-2.5 px-3 text-right font-bold ${(annee.cash_flow || 0) >= 0 ? 'gold-accent' : 'text-red-400'
+                      }`}>
                       {(annee.cash_flow || 0).toLocaleString()}
                     </td>
-                    <td className={`py-2.5 px-3 text-right font-bold ${
-                      (annee.tresorerie_cumulee || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'
-                    }`}>
+                    <td className={`py-2.5 px-3 text-right font-bold ${(annee.tresorerie_cumulee || 0) >= 0 ? 'text-emerald-400' : 'text-red-400'
+                      }`}>
                       {(annee.tresorerie_cumulee || 0).toLocaleString()}
                     </td>
                   </tr>
@@ -473,9 +479,8 @@ function BilanTab({ projection }: any) {
               {projection.map((annee: any, idx: number) => (
                 <tr
                   key={annee.annee}
-                  className={`border-b border-slate-800 hover:bg-slate-800/50 transition-colors ${
-                    idx % 5 === 4 ? 'border-b-2 border-slate-700' : ''
-                  }`}
+                  className={`border-b border-slate-800 hover:bg-slate-800/50 transition-colors ${idx % 5 === 4 ? 'border-b-2 border-slate-700' : ''
+                    }`}
                 >
                   <td className="py-2.5 px-3 font-bold text-slate-300">{annee.annee}</td>
                   <td className="py-2.5 px-3 text-right text-emerald-400">{(annee.actif_immobilise_brut || 0).toLocaleString()}</td>
@@ -494,7 +499,7 @@ function BilanTab({ projection }: any) {
   );
 }
 
-function DetailsTab({ projection, indicateurs }: any) {
+function DetailsTab({ projection }: any) {
   const totalCharges = [
     { label: 'Taxe Fonc.', value: projection.reduce((s: number, a: any) => s + (a.taxe_fonciere || 0), 0), color: '#ef4444' },
     { label: 'Copro', value: projection.reduce((s: number, a: any) => s + (a.charges_copro || 0), 0), color: '#f59e0b' },
