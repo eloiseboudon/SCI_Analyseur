@@ -91,28 +91,28 @@ export function DarkResultsTabs({ data, onBack, onEdit }: DarkResultsTabsProps) 
     <div className="min-h-screen bg-black">
       {/* Header with Neon */}
       <div className="sticky top-0 z-50 glass-darker border-b border-white/20">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
               <button
                 onClick={onBack}
-                className="flex items-center gap-2 px-4 py-2 glass-dark text-slate-300 rounded-xl border border-slate-600 hover:gold-accent transition-all"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600 px-4 py-2 text-slate-300 transition-all glass-dark hover:gold-accent md:w-auto"
               >
                 <ArrowLeft className="w-4 h-4" />
                 Retour
               </button>
-              <div>
+              <div className="text-center sm:text-left">
                 <h2 className="text-xl font-bold gold-accent">
                   {data.nom_sci}
                 </h2>
                 <p className="text-xs text-slate-500">Analyse professionnelle • 30 ans</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
               {onEdit && (
                 <button
                   onClick={onEdit}
-                  className="flex items-center gap-2 px-5 py-2.5 glass-dark border border-cyan-500/40 text-cyan-200 rounded-xl hover:border-cyan-400 hover:text-white transition-all"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/40 px-5 py-2.5 text-cyan-200 transition-all glass-dark hover:border-cyan-400 hover:text-white sm:w-auto"
                 >
                   <Edit2 className="w-4 h-4" />
                   Modifier le projet
@@ -121,7 +121,7 @@ export function DarkResultsTabs({ data, onBack, onEdit }: DarkResultsTabsProps) 
               <button
                 onClick={handleDownload}
                 disabled={downloading}
-                className={`flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-zinc-900 to-black border-gold text-white rounded-xl transition-all border border-emerald-600/40 font-semibold ${downloading ? 'opacity-60 cursor-not-allowed' : 'hover:from-emerald-500 hover:to-cyan-500'}`}
+                className={`flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-600/40 bg-gradient-to-r from-zinc-900 to-black px-6 py-2.5 font-semibold text-white transition-all sm:w-auto ${downloading ? 'cursor-not-allowed opacity-60' : 'hover:from-emerald-500 hover:to-cyan-500'}`}
               >
                 <Download className="w-4 h-4" />
                 {downloading ? 'Téléchargement…' : 'Export Excel'}
@@ -132,9 +132,9 @@ export function DarkResultsTabs({ data, onBack, onEdit }: DarkResultsTabsProps) 
       </div>
 
       {/* Tabs Navigation */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6">
         <div className="glass-darker rounded-2xl border border-slate-600 p-2">
-          <div className="flex gap-2 overflow-x-auto">
+          <div className="flex gap-2 overflow-x-auto pb-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -157,7 +157,7 @@ export function DarkResultsTabs({ data, onBack, onEdit }: DarkResultsTabsProps) 
       </div>
 
       {/* Tab Content */}
-      <div className="max-w-7xl mx-auto px-6 pb-12">
+      <div className="max-w-7xl mx-auto px-4 pb-12 sm:px-6">
         <div className="animate-fadeIn">
           {activeTab === 'synthese' && <SyntheseTab indicateurs={indicateurs} projection={projection} />}
           {activeTab === 'ai_analysis' && <AIProjectAnalysis data={data} />}
@@ -193,7 +193,7 @@ function SyntheseTab({ indicateurs, projection }: any) {
   return (
     <div className="space-y-6">
       {/* KPIs with Neon */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <NeonKPI
           title="Rendement Brut"
           value={indicateurs?.rendement_brut || '0%'}
@@ -225,7 +225,7 @@ function SyntheseTab({ indicateurs, projection }: any) {
       </div>
 
       {/* Big Numbers Dark */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
         <DarkBigCard
           title="Investissement Total"
           value={(indicateurs?.investissement_total || 0).toLocaleString()}
@@ -247,7 +247,7 @@ function SyntheseTab({ indicateurs, projection }: any) {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="glass-darker rounded-2xl border border-slate-600 p-6 chart-zoom cursor-pointer">
           <h3 className="text-lg font-bold gold-accent neon-text-light mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
@@ -278,7 +278,7 @@ function SyntheseTab({ indicateurs, projection }: any) {
       {/* Timeline Dark */}
       <div className="glass-darker rounded-2xl border border-yellow-600/40 p-6 chart-zoom cursor-pointer hover:neon-glow-yellow">
         <h3 className="text-lg font-bold text-yellow-400 mb-6">Points Clés du Projet</h3>
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
           <DarkTimelineCard
             year="An 1"
             title="Démarrage"
@@ -367,7 +367,7 @@ function TresorerieTab({ projection }: any) {
   return (
     <div className="space-y-6">
       {/* Analysis Cards Neon */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <DarkAnalysisCard
           title="Break-Even Trésorerie"
           value={breakEven > 0 ? `Année ${breakEven + 1}` : 'Non atteint'}
@@ -443,7 +443,7 @@ function BilanTab({ projection }: any) {
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="glass-darker rounded-2xl border border-emerald-600/40 p-6 chart-zoom cursor-pointer hover:neon-glow-green">
           <h4 className="text-sm font-medium text-slate-400 mb-2"> Patrimoine Net Final</h4>
           <p className="text-4xl font-bold text-yellow-400 mb-1">{(projection[29]?.capitaux_propres || 0).toLocaleString()} €</p>

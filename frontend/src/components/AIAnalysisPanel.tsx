@@ -19,8 +19,8 @@ export function AIAnalysisPanel({ analysis }: AIAnalysisPanelProps) {
 
   return (
     <div className="space-y-8 animate-fadeIn">
-      <div className="luxury-card rounded-none p-12">
-        <div className="flex items-center justify-between border-b border-white/10 pb-8 mb-8">
+      <div className="luxury-card rounded-none p-6 sm:p-8 lg:p-12">
+        <div className="flex flex-col gap-6 border-b border-white/10 pb-6 sm:flex-row sm:items-start sm:justify-between sm:pb-8">
           <div>
             <div className="flex items-center gap-4 mb-3">
               <Activity className="w-8 h-8 gold-accent" />
@@ -28,17 +28,17 @@ export function AIAnalysisPanel({ analysis }: AIAnalysisPanelProps) {
             </div>
             <p className="text-sm text-slate-400 tracking-wide">Évaluation basée sur 50+ métriques financières</p>
           </div>
-          <div className="text-right">
-            <div className="text-6xl font-bold mb-2 gold-accent">
+          <div className="text-left sm:text-right">
+            <div className="mb-2 text-4xl font-bold gold-accent sm:text-5xl lg:text-6xl">
               {analysis.score}
             </div>
             <div className="text-sm text-slate-500 tracking-widest">SCORE</div>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-8">
-          <div className="col-span-2 flex items-center gap-6">
-            <div className="w-24 h-24 rounded-sm border-2 border-gold/40 bg-gold/10 flex items-center justify-center">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="flex items-center gap-6 lg:col-span-2">
+            <div className="flex h-20 w-20 items-center justify-center rounded-sm border-2 border-gold/40 bg-gold/10 sm:h-24 sm:w-24">
               <VerdictIcon className="w-12 h-12 gold-accent" />
             </div>
             <div>
@@ -48,8 +48,8 @@ export function AIAnalysisPanel({ analysis }: AIAnalysisPanelProps) {
               <p className="text-slate-300 leading-relaxed text-sm">{analysis.recommendation}</p>
             </div>
           </div>
-          <div className="flex items-center justify-end">
-            <div className="text-center p-6 rounded-sm border border-gold/30 bg-gold/5">
+          <div className="flex items-center justify-start lg:justify-end">
+            <div className="rounded-sm border border-gold/30 bg-gold/5 p-4 text-center sm:p-6">
               <div className="text-xs text-slate-400 uppercase tracking-widest mb-2">Notation</div>
               <div className="text-4xl font-bold tracking-wider gold-accent">
                 {config.grade}
@@ -59,12 +59,12 @@ export function AIAnalysisPanel({ analysis }: AIAnalysisPanelProps) {
         </div>
       </div>
 
-      <div className="luxury-card rounded-none p-8">
+      <div className="luxury-card rounded-none p-6 sm:p-8">
         <h3 className="text-xl font-light tracking-wider gold-accent mb-6 uppercase flex items-center gap-3">
           <Target className="w-6 h-6" />
           Indicateurs de Santé Financière
         </h3>
-        <div className="grid grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
           <MetricBar label="FLUX TRÉSORERIE" value={analysis.financialHealth.cashflow} />
           <MetricBar label="RENTABILITÉ" value={analysis.financialHealth.profitability} />
           <MetricBar label="CONTRÔLE RISQUE" value={analysis.financialHealth.risk} />
@@ -72,9 +72,9 @@ export function AIAnalysisPanel({ analysis }: AIAnalysisPanelProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         {analysis.strengths.length > 0 && (
-          <div className="luxury-card rounded-none p-8">
+          <div className="luxury-card rounded-none p-6 sm:p-8">
             <h3 className="text-xl font-light tracking-wider mb-6 uppercase flex items-center gap-3 text-emerald-400">
               <TrendingUp className="w-6 h-6" />
               Points Forts ({analysis.strengths.length})
@@ -97,7 +97,7 @@ export function AIAnalysisPanel({ analysis }: AIAnalysisPanelProps) {
         )}
 
         {analysis.weaknesses.length > 0 && (
-          <div className="luxury-card rounded-none p-8">
+          <div className="luxury-card rounded-none p-6 sm:p-8">
             <h3 className="text-xl font-light tracking-wider mb-6 uppercase flex items-center gap-3 text-red-400">
               <TrendingDown className="w-6 h-6" />
               Facteurs de Risque ({analysis.weaknesses.length})
@@ -122,12 +122,12 @@ export function AIAnalysisPanel({ analysis }: AIAnalysisPanelProps) {
         )}
       </div>
 
-      <div className="luxury-card rounded-none p-8">
+      <div className="luxury-card rounded-none p-6 sm:p-8">
         <h3 className="text-xl font-light tracking-wider gold-accent mb-6 uppercase flex items-center gap-3">
           <Lightbulb className="w-6 h-6" />
           Stratégies d'Optimisation ({analysis.improvements.length})
         </h3>
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {analysis.improvements.map((improvement, idx) => (
             <div key={idx} className="p-6 bg-black/40 border border-white/5 hover:border-gold/30 transition-all">
               <div className="flex items-start justify-between mb-4">
@@ -153,7 +153,7 @@ export function AIAnalysisPanel({ analysis }: AIAnalysisPanelProps) {
         </div>
       </div>
 
-      <div className="p-6 bg-black/60 border border-white/5 rounded-none">
+      <div className="rounded-none border border-white/5 bg-black/60 p-4 text-center sm:p-6">
         <p className="text-xs text-slate-500 text-center leading-relaxed tracking-wide">
           AVERTISSEMENT: Cette analyse algorithmique est fournie à titre informatif uniquement. Consultez des professionnels qualifiés avant toute décision d'investissement.
         </p>

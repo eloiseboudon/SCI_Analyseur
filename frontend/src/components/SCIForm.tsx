@@ -159,14 +159,14 @@ export function SCIForm({
   const rendementBrut = coutTotal > 0 ? ((totalLoyersAnnuels / coutTotal) * 100).toFixed(2) : '0.00';
 
   return (
-    <form onSubmit={handleSubmit} className="glass-darker rounded-xl border border-slate-700 p-6 space-y-6">
+    <form onSubmit={handleSubmit} className="glass-darker rounded-xl border border-slate-700 p-4 space-y-6 sm:p-6">
       <div>
         <h2 className="text-xl font-bold text-slate-100 mb-1">Configuration SCI à l'IS</h2>
         <p className="text-sm text-slate-400">Analyse complète sur 30 ans avec tous les paramètres fiscaux</p>
       </div>
 
-      <div className="grid grid-cols-4 gap-4 pb-6 border-b border-slate-700">
-        <div className="col-span-2">
+      <div className="grid grid-cols-1 gap-4 border-b border-slate-700 pb-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="col-span-1 sm:col-span-2 lg:col-span-2">
           <label className="block text-xs font-medium text-slate-300 mb-1">Nom de la SCI</label>
           <input
             type="text"
@@ -175,7 +175,7 @@ export function SCIForm({
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
           />
         </div>
-        <div>
+        <div className="col-span-1">
           <label className="block text-xs font-medium text-slate-300 mb-1">Capital social (€)</label>
           <input
             type="number"
@@ -184,7 +184,7 @@ export function SCIForm({
             className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
           />
         </div>
-        <div>
+        <div className="col-span-1">
           <label className="block text-xs font-medium text-slate-300 mb-1">Associé·e·s</label>
           <input
             type="number"
@@ -197,8 +197,8 @@ export function SCIForm({
 
       <div>
         <h3 className="font-semibold text-slate-100 mb-3">Acquisition du Bien</h3>
-        <div className="grid grid-cols-4 gap-3">
-          <div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Prix d'achat (€)</label>
             <input
               type="number"
@@ -207,7 +207,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">
               Valeur terrain (€)
               <span className="text-xs text-slate-500 ml-1">(non amortissable)</span>
@@ -219,7 +219,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Année achat</label>
             <input
               type="number"
@@ -228,7 +228,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">
               Âge immeuble (ans)
               <span className="text-xs text-slate-500 ml-1">(CRL si &gt;15)</span>
@@ -240,7 +240,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Frais notaire (€)</label>
             <input
               type="number"
@@ -249,7 +249,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Frais agence (€)</label>
             <input
               type="number"
@@ -258,7 +258,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Travaux initiaux (€)</label>
             <input
               type="number"
@@ -267,7 +267,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Meubles (€)</label>
             <input
               type="number"
@@ -281,8 +281,8 @@ export function SCIForm({
 
       <div className="pb-6 border-b border-slate-700">
         <h3 className="font-semibold text-slate-100 mb-3">Financement</h3>
-        <div className="grid grid-cols-4 gap-3">
-          <div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Apport SCI (€)</label>
             <input
               type="number"
@@ -291,7 +291,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Apport CCA (€)</label>
             <input
               type="number"
@@ -300,7 +300,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Taux CCA (%)</label>
             <input
               type="number"
@@ -310,7 +310,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Capital emprunté (€)</label>
             <input
               type="number"
@@ -319,7 +319,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Taux crédit (%)</label>
             <input
               type="number"
@@ -329,7 +329,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Durée (ans)</label>
             <input
               type="number"
@@ -338,7 +338,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Assurance (%)</label>
             <input
               type="number"
@@ -366,7 +366,7 @@ export function SCIForm({
           </div>
 
           {/* En-têtes des colonnes */}
-          <div className="grid grid-cols-12 gap-2 text-xs text-slate-400 font-medium">
+          <div className="hidden grid-cols-12 gap-2 text-xs font-medium text-slate-400 md:grid">
             <div className="col-span-1">#</div>
             <div className="col-span-5">Loyer (€/mois)</div>
             <div className="col-span-3">Surface (m²)</div>
@@ -374,47 +374,64 @@ export function SCIForm({
           </div>
 
           {/* Liste des appartements */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             {appartements.map((apt, index) => (
-              <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                <div className="col-span-1 text-sm font-medium text-slate-400">#{apt.numero}</div>
+              <div
+                key={index}
+                className="flex flex-col gap-3 rounded-lg border border-slate-700 p-4 md:grid md:grid-cols-12 md:items-center md:gap-2 md:border-0 md:p-0"
+              >
+                <div className="flex items-center justify-between md:col-span-1 md:block">
+                  <span className="text-sm font-medium text-slate-300 md:text-slate-400">#{apt.numero}</span>
+                  {appartements.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeAppartement(index)}
+                      className="rounded-lg p-2 text-red-400 transition-colors hover:bg-red-900/20 md:hidden"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
 
-                <div className="col-span-5">
+                <div className="md:col-span-5">
+                  <span className="text-xs text-slate-400 md:hidden">Loyer (€/mois)</span>
                   <input
                     type="number"
                     value={apt.loyer_mensuel}
                     onChange={(e) => updateAppartement(index, 'loyer_mensuel', parseFloat(e.target.value))}
                     placeholder="Loyer (€/mois)"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+                    className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-slate-100 transition-colors focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                   />
                 </div>
 
-                <div className="col-span-3">
+                <div className="md:col-span-3">
+                  <span className="text-xs text-slate-400 md:hidden">Surface (m²)</span>
                   <input
                     type="number"
                     value={apt.surface}
                     onChange={(e) => updateAppartement(index, 'surface', parseFloat(e.target.value))}
                     placeholder="Surface (m²)"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+                    className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-slate-100 transition-colors focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                   />
                 </div>
 
-                <div className="col-span-2">
+                <div className="md:col-span-2">
+                  <span className="text-xs text-slate-400 md:hidden">Charges (€/mois)</span>
                   <input
                     type="number"
                     value={apt.charges_recuperables}
                     onChange={(e) => updateAppartement(index, 'charges_recuperables', parseFloat(e.target.value))}
                     placeholder="Charges (€/mois)"
-                    className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+                    className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-slate-100 transition-colors focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                   />
                 </div>
 
-                <div className="col-span-1 flex justify-end">
+                <div className="flex justify-end md:col-span-1">
                   {appartements.length > 1 && (
                     <button
                       type="button"
                       onClick={() => removeAppartement(index)}
-                      className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg"
+                      className="hidden rounded-lg p-2 text-red-400 transition-colors hover:bg-red-900/20 md:block"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -448,30 +465,38 @@ export function SCIForm({
           </div>
 
           {revenusAnnexes.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {revenusAnnexes.map((rev, index) => (
-                <div key={index} className="flex gap-2 items-center">
-                  <input
-                    type="text"
-                    value={rev.nom}
-                    onChange={(e) => updateRevenuAnnexe(index, 'nom', e.target.value)}
-                    placeholder="Nom (Garage, Cave...)"
-                    className="flex-1 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100"
-                  />
-                  <input
-                    type="number"
-                    value={rev.montant_annuel}
-                    onChange={(e) => updateRevenuAnnexe(index, 'montant_annuel', parseFloat(e.target.value))}
-                    placeholder="Montant annuel (€)"
-                    className="w-40 px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeRevenuAnnexe(index)}
-                    className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                <div key={index} className="flex flex-col gap-3 rounded-lg border border-slate-700 p-4 sm:flex-row sm:items-center sm:border-0 sm:p-0">
+                  <div className="flex-1">
+                    <span className="text-xs text-slate-400 sm:hidden">Nom (Garage, Cave...)</span>
+                    <input
+                      type="text"
+                      value={rev.nom}
+                      onChange={(e) => updateRevenuAnnexe(index, 'nom', e.target.value)}
+                      placeholder="Nom (Garage, Cave...)"
+                      className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+                    />
+                  </div>
+                  <div className="sm:w-48">
+                    <span className="text-xs text-slate-400 sm:hidden">Montant annuel (€)</span>
+                    <input
+                      type="number"
+                      value={rev.montant_annuel}
+                      onChange={(e) => updateRevenuAnnexe(index, 'montant_annuel', parseFloat(e.target.value))}
+                      placeholder="Montant annuel (€)"
+                      className="w-full rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-slate-100"
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => removeRevenuAnnexe(index)}
+                      className="rounded-lg p-2 text-red-400 transition-colors hover:bg-red-900/20"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -481,8 +506,8 @@ export function SCIForm({
 
       <div className="pb-6 border-b border-slate-700">
         <h3 className="font-semibold text-slate-100 mb-3">Charges Annuelles</h3>
-        <div className="grid grid-cols-4 gap-3">
-          <div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Taxe foncière (€)</label>
             <input
               type="number"
@@ -491,7 +516,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Charges copro (€/an)</label>
             <input
               type="number"
@@ -500,7 +525,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Comptabilité (€/an)</label>
             <input
               type="number"
@@ -509,7 +534,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Assurance PNO (€/an)</label>
             <input
               type="number"
@@ -518,7 +543,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">GLI (% loyers)</label>
             <input
               type="number"
@@ -528,7 +553,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Gestion (% loyers)</label>
             <input
               type="number"
@@ -538,7 +563,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Entretien (€/an)</label>
             <input
               type="number"
@@ -547,7 +572,7 @@ export function SCIForm({
               className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <label className="block text-xs font-medium text-slate-300 mb-1">Honoraires gérant (€/an)</label>
             <input
               type="number"
@@ -570,11 +595,11 @@ export function SCIForm({
         </button>
 
         {showAdvanced && (
-          <div className="space-y-6 pl-6 border-l-2 border-cyan-500/30">
+          <div className="space-y-6 border-l-2 border-cyan-500/30 pl-4 sm:pl-6">
             <div>
               <h3 className="font-semibold text-slate-100 mb-3">Hypothèses & Évolution</h3>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="col-span-1">
                   <label className="block text-xs font-medium text-slate-300 mb-1">Vacance locative (%)</label>
                   <input
                     type="number"
@@ -584,7 +609,7 @@ export function SCIForm({
                     className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
                   />
                 </div>
-                <div>
+                <div className="col-span-1">
                   <label className="block text-xs font-medium text-slate-300 mb-1">Indexation loyers (%/an)</label>
                   <input
                     type="number"
@@ -594,7 +619,7 @@ export function SCIForm({
                     className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
                   />
                 </div>
-                <div>
+                <div className="col-span-1">
                   <label className="block text-xs font-medium text-slate-300 mb-1">Inflation charges (%/an)</label>
                   <input
                     type="number"
@@ -609,8 +634,8 @@ export function SCIForm({
 
             <div>
               <h3 className="font-semibold text-slate-100 mb-3">Durées d'Amortissement</h3>
-              <div className="grid grid-cols-4 gap-3">
-                <div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="col-span-1">
                   <label className="block text-xs font-medium text-slate-300 mb-1">Bâtiment (ans)</label>
                   <input
                     type="number"
@@ -619,7 +644,7 @@ export function SCIForm({
                     className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
                   />
                 </div>
-                <div>
+                <div className="col-span-1">
                   <label className="block text-xs font-medium text-slate-300 mb-1">Travaux (ans)</label>
                   <input
                     type="number"
@@ -628,7 +653,7 @@ export function SCIForm({
                     className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
                   />
                 </div>
-                <div>
+                <div className="col-span-1">
                   <label className="block text-xs font-medium text-slate-300 mb-1">Frais acquis. (ans)</label>
                   <input
                     type="number"
@@ -637,7 +662,7 @@ export function SCIForm({
                     className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
                   />
                 </div>
-                <div>
+                <div className="col-span-1">
                   <label className="block text-xs font-medium text-slate-300 mb-1">Meubles (ans)</label>
                   <input
                     type="number"
@@ -651,8 +676,8 @@ export function SCIForm({
 
             <div>
               <h3 className="font-semibold text-slate-100 mb-3">Travaux de Gros Entretien</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="col-span-1">
                   <label className="block text-xs font-medium text-slate-300 mb-1">Travaux à 10 ans (€)</label>
                   <input
                     type="number"
@@ -661,7 +686,7 @@ export function SCIForm({
                     className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-sm text-slate-100 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
                   />
                 </div>
-                <div>
+                <div className="col-span-1">
                   <label className="block text-xs font-medium text-slate-300 mb-1">Travaux à 20 ans (€)</label>
                   <input
                     type="number"
@@ -676,12 +701,12 @@ export function SCIForm({
         )}
       </div>
 
-      <div className="flex justify-end gap-3 pt-2">
+      <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
         {onCancel && (
           <button
             type="button"
             onClick={onCancel}
-            className="flex items-center gap-2 px-5 py-2.5 glass-dark border border-slate-600 text-slate-300 rounded-lg hover:text-white hover:border-cyan-500"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-600 px-5 py-2.5 text-slate-300 transition-colors glass-dark hover:border-cyan-500 hover:text-white sm:w-auto"
           >
             Annuler
           </button>
@@ -689,7 +714,7 @@ export function SCIForm({
         <button
           type="submit"
           disabled={loading}
-          className="flex items-center justify-center gap-2 px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-500 disabled:opacity-60 font-medium text-base"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-600 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           {loading ? (
             <>
@@ -704,6 +729,6 @@ export function SCIForm({
           )}
         </button>
       </div>
-    </form >
+    </form>
   );
 }

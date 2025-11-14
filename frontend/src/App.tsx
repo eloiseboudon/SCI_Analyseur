@@ -294,17 +294,17 @@ export default function App() {
             Centralisez vos analyses, relancez des simulations et exportez vos rapports en un clic.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <button
             onClick={handleRefresh}
-            className="flex items-center gap-2 px-4 py-2 glass-dark border border-slate-600 text-slate-300 rounded-lg hover:text-white hover:border-cyan-500"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-600 px-4 py-2 text-center text-slate-300 transition-colors glass-dark hover:border-cyan-500 hover:text-white sm:w-auto"
           >
             <RefreshCw className="w-4 h-4" />
             Actualiser
           </button>
           <button
             onClick={handleCreateProject}
-            className="flex items-center gap-2 px-5 py-2.5 bg-cyan-600 text-white rounded-lg hover:bg-cyan-500 font-medium"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-600 px-5 py-2.5 text-center font-medium text-white transition-colors hover:bg-cyan-500 sm:w-auto"
           >
             <PlusCircle className="w-5 h-5" />
             Nouveau projet
@@ -381,56 +381,52 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleViewProject(project.id);
-                      }}
-                      disabled={isViewing}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-600 text-slate-200 hover:border-cyan-500 hover:text-white ${isViewing ? 'opacity-60 cursor-not-allowed' : ''
-                        }`}
-                    >
-                      <Eye className="w-4 h-4" />
-                      {isViewing ? 'Ouverture…' : 'Consulter'}
-                    </button>
-                    <button
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleViewProject(project.id);
+                    }}
+                    disabled={isViewing}
+                    className={`flex w-full items-center justify-center gap-2 rounded-lg border border-slate-600 px-4 py-2 text-slate-200 transition-colors hover:border-cyan-500 hover:text-white sm:w-auto ${isViewing ? 'cursor-not-allowed opacity-60' : ''}`}
+                  >
+                    <Eye className="w-4 h-4" />
+                    {isViewing ? 'Ouverture…' : 'Consulter'}
+                  </button>
+                  <button
                       onClick={(event) => {
                         event.stopPropagation();
                         handleEditProject(project.id);
-                      }}
-                      disabled={isEditing}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-600 text-slate-200 hover:border-cyan-500 hover:text-white ${isEditing ? 'opacity-60 cursor-not-allowed' : ''
-                        }`}
-                    >
-                      <Edit2 className="w-4 h-4" />
-                      {isEditing ? 'Chargement…' : 'Modifier'}
-                    </button>
-                    <button
+                    }}
+                    disabled={isEditing}
+                    className={`flex w-full items-center justify-center gap-2 rounded-lg border border-slate-600 px-4 py-2 text-slate-200 transition-colors hover:border-cyan-500 hover:text-white sm:w-auto ${isEditing ? 'cursor-not-allowed opacity-60' : ''}`}
+                  >
+                    <Edit2 className="w-4 h-4" />
+                    {isEditing ? 'Chargement…' : 'Modifier'}
+                  </button>
+                  <button
                       onClick={(event) => {
                         event.stopPropagation();
                         handleExportProject(project);
-                      }}
-                      disabled={downloadingProjectId === project.id}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-emerald-600/50 text-emerald-200 hover:border-emerald-400 hover:text-white ${downloadingProjectId === project.id ? 'opacity-60 cursor-not-allowed' : ''
-                        }`}
-                    >
-                      <Download className="w-4 h-4" />
-                      {downloadingProjectId === project.id ? 'Export…' : 'Exporter'}
-                    </button>
-                    <button
+                    }}
+                    disabled={downloadingProjectId === project.id}
+                    className={`flex w-full items-center justify-center gap-2 rounded-lg border border-emerald-600/50 px-4 py-2 text-emerald-200 transition-colors hover:border-emerald-400 hover:text-white sm:w-auto ${downloadingProjectId === project.id ? 'cursor-not-allowed opacity-60' : ''}`}
+                  >
+                    <Download className="w-4 h-4" />
+                    {downloadingProjectId === project.id ? 'Export…' : 'Exporter'}
+                  </button>
+                  <button
                       onClick={(event) => {
                         event.stopPropagation();
                         handleDeleteProject(project.id);
-                      }}
-                      disabled={isDeleting}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-red-600/50 text-red-200 hover:border-red-400 hover:text-white ${isDeleting ? 'opacity-60 cursor-not-allowed' : ''
-                        }`}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      {isDeleting ? 'Suppression…' : 'Supprimer'}
-                    </button>
-                  </div>
+                    }}
+                    disabled={isDeleting}
+                    className={`flex w-full items-center justify-center gap-2 rounded-lg border border-red-600/50 px-4 py-2 text-red-200 transition-colors hover:border-red-400 hover:text-white sm:w-auto ${isDeleting ? 'cursor-not-allowed opacity-60' : ''}`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {isDeleting ? 'Suppression…' : 'Supprimer'}
+                  </button>
+                </div>
                 </div>
               </div>
             );
@@ -442,7 +438,7 @@ export default function App() {
 
   const renderForm = () => (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-xl font-semibold text-slate-100">
             {editingProjectId ? 'Modifier le projet' : 'Nouveau projet'}
@@ -453,7 +449,7 @@ export default function App() {
         </div>
         <button
           onClick={handleFormCancel}
-          className="flex items-center gap-2 px-4 py-2 glass-dark border border-slate-600 text-slate-300 rounded-lg hover:text-white hover:border-cyan-500"
+          className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-600 px-4 py-2 text-slate-300 transition-colors glass-dark hover:border-cyan-500 hover:text-white md:w-auto"
         >
           Retour à la liste
         </button>
@@ -480,7 +476,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       <header className="glass-darker border-b border-cyan-500/20">
-        <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <div className="glass-dark neon-border-cyan p-3 rounded-xl">
@@ -499,7 +495,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setShowExplanation(true)}
-              className="flex items-center justify-center gap-2 px-4 py-2 glass-dark border border-cyan-500/40 text-cyan-200 rounded-lg hover:border-cyan-400 hover:text-white transition-colors"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-500/40 px-4 py-2 text-cyan-200 transition-colors glass-dark hover:border-cyan-400 hover:text-white md:w-auto"
               aria-haspopup="dialog"
               aria-expanded={showExplanation}
             >
@@ -510,7 +506,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6">
         {view === 'list' && renderProjectList()}
         {view === 'form' && renderForm()}
         {view === 'results' && results && (
@@ -524,7 +520,7 @@ export default function App() {
 
       {showExplanation && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-slate-950/80 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 backdrop-blur-md"
           role="presentation"
           onClick={() => setShowExplanation(false)}
         >
@@ -532,7 +528,7 @@ export default function App() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="explication-calculs-titre"
-            className="relative w-full max-w-3xl glass-darker border border-cyan-500/30 rounded-2xl p-6 text-slate-100"
+            className="relative w-full max-w-3xl rounded-2xl border border-cyan-500/30 p-6 text-slate-100 glass-darker sm:p-8"
             onClick={(event) => event.stopPropagation()}
           >
             <button
@@ -543,7 +539,7 @@ export default function App() {
             >
               <X className="w-5 h-5" />
             </button>
-            <div className="space-y-4 pr-6">
+            <div className="space-y-4 sm:pr-6">
               <h2 id="explication-calculs-titre" className="text-xl font-semibold text-cyan-200">
                 Comment sont réalisés nos calculs ?
               </h2>
