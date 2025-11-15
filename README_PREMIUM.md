@@ -1,104 +1,37 @@
-# 🚀 Analyseur Professionnel SCI à l'IS - Version Premium
+# Interface premium
 
-> **L'outil d'analyse immobilière le plus complet et le plus BEAU pour les SCI à l'Impôt sur les Sociétés**
+Cette page résume les choix UX/UI qui donnent à l'application son rendu "premium".
 
----
+## Principes
 
-## ✨ NOUVEAU : Interface Ultra-Moderne Version 3.0
+* **Dark mode** constant (`bg-black`, `glass-darker`) avec halos dorés/cyans (`index.css`).
+* **Transitions douces** (`animate-fadeIn`, `chart-zoom`) pour valoriser les KPI et graphiques.
+* **Icônes cohérentes** (`lucide-react`) pour chaque action/onglet.
 
-### 🎨 Design Premium
+## Contenu des onglets (DarkResultsTabs)
 
-- **Glassmorphism** : Effets de flou backdrop
-- **Gradients colorés** sur chaque section  
-- **Animations fluides** : fadeIn, scale, hover
-- **Canvas natifs** : Pas de librairies lourdes!
-- **Responsive** : Mobile → Desktop parfait
+| Onglet | Mise en forme | Contenu clé |
+| --- | --- | --- |
+| Synthèse | Grille responsive (1→4 colonnes), cartes `glass-darker` avec halos, graphiques Canvas. | KPIs, big numbers, courbes Cash-Flow/Trésorerie, donut de l'année 1, timeline. |
+| Analyse IA | Cartes `luxury-card`, badges colorés par verdict, colonnes "Strengths / Weaknesses / Improvements". | Score, verdict textuel, jauge de santé financière, recommandations. |
+| Compte de résultat | Table `glass-darker` avec en-têtes accentués (`border-emerald-600/40`). | 30 années, totaux, CAF calculée, mise en avant de l'IS. |
+| Trésorerie | Cartes analytiques + tableau complet, accent magenta. | Cash-flow annuel, trésorerie cumulée, point mort. |
+| Bilan | Carte double (actif/passif) + tableau VNC/dette/capitaux propres. | Synthèse patrimoniale sur 30 ans. |
+| Analyses | Bar chart charges vs revenus + tableau de synthèse. | Focus sur la structure de charges et ratios. |
 
-### 📊 Graphiques Intégrés
+## Actions utilisateur
 
-✅ Courbes évolution (Cash-flow & Trésorerie)
-✅ Donut chart répartition loyers  
-✅ Histogrammes charges par type
-✅ Canvas 2D natif ultra-rapide
-✅ Interactions hover
+* **Export Excel** (bouton sticky) : gradient sombre + bordure verte, état "Téléchargement…".
+* **Modifier le projet** : bouton bord cyan qui renvoie au formulaire avec valeurs initiales.
+* **Retour** : bouton `glass-dark` pour revenir à la liste.
 
-### 🎯 5 Onglets Professionnels
+## Accessibilité & responsivité
 
-| Onglet | Design | Contenu |
-|--------|--------|---------|
-| **✨ Synthèse** | Gradient Bleu→Cyan | 4 KPIs + 3 Graphiques + Timeline |
-| **📄 Résultat** | Gradient Vert→Emeraude | Compte résultat 30 ans |
-| **💰 Trésorerie** | Gradient Violet→Purple | Cash-flow + Analyses auto |
-| **🏢 Bilan** | Gradient Orange→Rouge | Bilan patrimonial |
-| **📊 Analyses** | Gradient Rose→Pink | Détails + Bar chart |
+* Layout fluide (flex + grid) : cartes passent en colonne unique sur mobile.
+* Boutons suffisamment larges (`px-6 py-3`, `rounded-xl`).
+* Contraste assuré via `text-slate-100` et accents colorés.
 
----
+## Performances
 
-## 💎 Éléments Visuels Inclus
-
-### Page Synthèse
-
-🎯 **4 KPIs Animés** (scale on hover)
-- Rendement Brut, Net, Net-Net, ROI 30 ans
-- Cards avec gradients et icônes
-
-💰 **3 Big Number Cards**
-- Investissement total
-- Loyers 30 ans  
-- Cash-flow cumulé
-
-📈 **2 Graphiques Canvas**
-- Courbe Cash-Flow (gradient bleu)
-- Courbe Trésorerie (gradient vert)
-
-🍩 **Donut Chart Interactif**
-- Répartition loyers année 1
-- Légende avec pourcentages
-
-📅 **Timeline 3 Points**
-- Année 1, 10, 30
-- Stats clés par période
-
-### Tableaux Pros
-
-✅ Hover effects sur lignes
-✅ Code couleur (vert/rouge/bleu/orange)
-✅ Totaux en gras avec fond
-✅ Séparateurs toutes les 5 ans
-
----
-
-## 🚀 Lancement
-
-npm install
-npm run dev
-
-Build final : **196 KB** (56 KB gzipped)
-
----
-
-## 📊 Données Affichées
-
-**Plus de 800 points de données!**
-
-- 30 ans × 9 colonnes = 270 données (Compte résultat)
-- 30 ans × 7 colonnes = 210 données (Bilan)  
-- 30 ans × 6 colonnes = 180 données (Trésorerie)
-- 5+ graphiques interactifs
-- Analyses automatiques (break-even, min/max, totaux)
-
----
-
-## 🎨 Technologies
-
-- **React 18.3** + TypeScript
-- **Tailwind CSS** pour le design
-- **Canvas 2D natif** pour graphiques
-- **Supabase** pour backend
-- **0 librairies** de graphiques lourdes
-
----
-
-**Status** : ✅ Production Ready & INCROYABLE!
-
-*Fait avec ❤️ et beaucoup de gradients colorés* 🌈
+* Aucun framework graphique lourd : les graphiques sont implémentés manuellement (`ChartComponents.tsx` → Canvas 2D).
+* Les animations reposent sur CSS natif (pas de dépendances additionnelles).
