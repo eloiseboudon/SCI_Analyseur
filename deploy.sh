@@ -97,19 +97,48 @@ npm run build
 
 echo -e "${GREEN}✓${NC} Frontend rebuilé"
 
-# 5. Vérifier les migrations de la base de données (si nécessaire)
-echo -e "\n${YELLOW}[5/7]${NC} Vérification de la base de données..."
+
+# 5. Mise à jour de la base de données (migrations automatiques)
+echo -e "\n${YELLOW}[5/7]${NC} Mise à jour de la base de données..."
 cd $APP_DIR/backend
 source .venv/bin/activate
+
+# Vérifier que models.py existe
+if [ ! -f "models.py" ]; then
+    echo -e "${RED}✗${NC} Fichier models.py introuvable"
+    echo -e "${YELLOW}→${NC} Copiez models.py dans le dossier backend/"
+    deactivate
+    exit 1
+fi
+
+# Exécuter les migrations
 python3 << PYTHON_SCRIPT
-# Si vous avez des migrations à exécuter, ajoutez-les ici
-# Exemple:
-# from models import upgrade_db
-# upgrade_db()
-print("Base de données vérifiée")
+import sys
+sys.path.insert(0, '.')
+
+try:
+    from models import upgrade_db
+    print("🔄 Vérification des migrations disponibles...")
+    upgrade_db()
+except ImportError as e:
+    print(f"✗ Erreur d'import: {e}")
+    print("Assurez-vous que models.py est dans le dossier backend/")
+    sys.exit(1)
+except Exception as e:
+    print(f"✗ Erreur lors de la mise à jour de la base de données: {e}")
+    print("Vous pouvez restaurer une sauvegarde avec: ./db-manage.sh restore")
+    sys.exit(1)
 PYTHON_SCRIPT
+
+migration_status=$?
 deactivate
-echo -e "${GREEN}✓${NC} Base de données OK"
+
+if [ $migration_status -eq 0 ]; then
+    echo -e "${GREEN}✓${NC} Base de données mise à jour avec succès"
+else
+    echo -e "${RED}✗${NC} Échec de la mise à jour de la base de données"
+    exit 1
+fi
 
 # 6. Redémarrage des services
 echo -e "\n${YELLOW}[6/7]${NC} Redémarrage des services..."
