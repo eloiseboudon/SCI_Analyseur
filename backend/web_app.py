@@ -378,7 +378,7 @@ def serialize_project(
         "created_at": project.created_at.isoformat() if project.created_at else None,
         "updated_at": project.updated_at.isoformat() if project.updated_at else None,
         "excel_url": (
-            f"/api/projects/{project.id}/export" if project.excel_filename else None
+            f"/projects/{project.id}/export" if project.excel_filename else None
         ),
         "indicateurs": project.indicateurs,
         "annee_creation": (
@@ -883,7 +883,7 @@ def create_project() -> Tuple[str, int]:
     response = {
         **analysis,
         "project_id": project_id,
-        "excel_url": f"/api/projects/{project_id}/export",
+        "excel_url": f"/projects/{project_id}/export",
         "project": serialize_project(
             project, include_payload=True, include_projection=True
         ),
@@ -952,7 +952,7 @@ def update_project(project_id: str) -> Tuple[str, int]:
     response = {
         **analysis,
         "project_id": project_id,
-        "excel_url": f"/api/projects/{project_id}/export",
+        "excel_url": f"/projects/{project_id}/export",
         "project": serialize_project(
             project, include_payload=True, include_projection=True
         ),
