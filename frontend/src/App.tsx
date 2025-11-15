@@ -73,6 +73,7 @@ export default function App() {
   const [listError, setListError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [formErrorDetails, setFormErrorDetails] = useState<string[]>([]);
   const [formLoading, setFormLoading] = useState(false);
   const [results, setResults] = useState<any | null>(null);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
@@ -130,12 +131,14 @@ export default function App() {
     setFormInitialAppartements(undefined);
     setFormInitialRevenus(undefined);
     setFormError(null);
+    setFormErrorDetails([]);
     setView('form');
   };
 
   const handleSubmitProject = async (payload: any) => {
     setFormLoading(true);
     setFormError(null);
+    setFormErrorDetails([]);
     try {
       const method = editingProjectId ? 'PUT' : 'POST';
       const url = editingProjectId
@@ -152,7 +155,35 @@ export default function App() {
 
       const body = await response.json();
       if (!response.ok || body.success === false) {
-        throw new Error(body.error || 'Impossible de sauvegarder le projet');
+        const message = body.error || 'Impossible de sauvegarder le projet';
+        const details = Array.isArray(body.details)
+          ? body.details
+              .map((detail: any) => {
+                if (!detail) {
+                  return null;
+                }
+
+                const path = Array.isArray(detail.loc)
+                  ? detail.loc.join(' → ')
+                  : detail.loc;
+                const description = detail.msg || detail.message;
+
+                if (!path && !description) {
+                  return null;
+                }
+
+                if (path && description) {
+                  return `${path}: ${description}`;
+                }
+
+                return path || description || null;
+              })
+              .filter((detail: string | null): detail is string => Boolean(detail))
+          : [];
+
+        setFormError(message);
+        setFormErrorDetails(details);
+        return;
       }
 
       const projectId = body.project_id || body.project?.id || editingProjectId;
@@ -162,6 +193,7 @@ export default function App() {
       await fetchProjects();
     } catch (error: any) {
       setFormError(error.message || 'Erreur lors de la sauvegarde du projet');
+      setFormErrorDetails([]);
     } finally {
       setFormLoading(false);
     }
@@ -456,8 +488,15 @@ export default function App() {
       </div>
 
       {formError && (
-        <div className="border border-red-500/40 bg-red-900/40 text-red-100 px-4 py-3 rounded-lg">
-          {formError}
+        <div className="border border-red-500/40 bg-red-900/40 text-red-100 px-4 py-3 rounded-lg space-y-2">
+          <p>{formError}</p>
+          {formErrorDetails.length > 0 && (
+            <ul className="list-disc list-inside text-sm space-y-1">
+              {formErrorDetails.map((detail, index) => (
+                <li key={index}>{detail}</li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
