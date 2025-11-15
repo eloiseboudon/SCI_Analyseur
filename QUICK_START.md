@@ -1,141 +1,51 @@
-# 🚀 Guide de Démarrage Rapide - SCI Analyzer
+# Quick start développement local
 
-## ✅ Application Minimaliste SCI IS
+## Backend (analyse + API)
 
-Cette application a été **entièrement simplifiée** pour ne gérer que des projets SCI à l'IS.
-
----
-
-## 🎯 Fonctionnalités
-
-### ✨ Ce qui fonctionne maintenant:
-
-1. **Authentification**
-   - Inscription / Connexion par email/mot de passe
-   - Déconnexion
-   - Protection RLS des données
-
-2. **Création de Projets SCI**
-   - Formulaire en 4 étapes:
-     - Informations SCI (nom, capital, associés, frais)
-     - Bien immobilier (prix, travaux, appartements)
-     - Crédit bancaire (optionnel)
-     - Charges annuelles (taxe foncière, assurances, etc.)
-
-3. **Liste des Projets**
-   - Affichage de tous vos projets
-   - Vue en grille avec informations clés
-
-4. **Détails du Projet** (placeholder)
-   - Prêt pour recevoir les calculs Python
-
----
-
-## 🔧 Test de l'Application
-
-### 1. Lancer l'application
 ```bash
-npm run dev
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Vérifier les dépendances majeures
+python start_here.py deps
+
+# Lancer l'API Flask (port 5010)
+python web_app.py
 ```
 
-### 2. Créer un compte
-- Cliquez sur "Inscription"
-- Email: `test@example.com`
-- Mot de passe: `password123`
+* Le fichier SQLite par défaut est `backend/sci_projects.db` (créé au premier démarrage).
+* Pour générer un rapport de démonstration sans API : `python start_here.py example` (export Excel dans `/mnt/user-data/outputs/`).
 
-### 3. Créer un projet
-- Cliquez sur "Nouveau projet"
-- Remplissez le formulaire en 4 étapes
-- Sauvegardez
+## Frontend (React + Vite)
 
-### 4. Voir vos projets
-- Cliquez sur "Mes projets"
-- Cliquez sur un projet pour voir les détails
-
----
-
-## 📊 Structure de la Base de Données
-
-### Tables créées:
-
-```sql
-sci_projects         → Projets SCI
-sci_properties       → Biens immobiliers
-sci_loans           → Crédits bancaires
-sci_apartments      → Appartements loués
-sci_charges         → Charges annuelles
+```bash
+cd frontend
+npm install
+npm run dev -- --host 0.0.0.0 --port 5173
 ```
 
-Toutes les tables sont protégées par **Row Level Security (RLS)**.
-
----
-
-## 🐍 Prochaine Étape: Connexion Python
-
-Pour finaliser l'application, il faut:
-
-### 1. Edge Function
-Créer une fonction Supabase qui:
-- Lit les données du projet depuis la DB
-- Formate les données pour le backend Python
-- Appelle `sci_analyser.py`
-- Retourne les résultats (projection 20 ans, compte de résultat, etc.)
-
-### 2. Affichage des Résultats
-Mettre à jour `ProjectResults.tsx` pour:
-- Appeler l'edge function
-- Afficher les tableaux de projection
-- Permettre l'export Excel
-
----
-
-## 💡 Points Importants
-
-### ✅ Avantages de cette approche:
-- **Simple**: Interface minimaliste, facile à comprendre
-- **Maintenable**: Aucun calcul complexe côté frontend
-- **Fiable**: Le backend Python fait tous les calculs
-- **Sécurisé**: RLS sur toutes les tables
-
-### ⚠️ À savoir:
-- Les calculs ne sont **pas encore implémentés**
-- Le backend Python existe mais n'est **pas connecté**
-- L'export Excel nécessite l'edge function
-
----
-
-## 🔍 Fichiers Importants
+Créer un fichier `.env` si nécessaire :
 
 ```
-src/
-├── App.tsx                    → Gestion auth + navigation
-├── components/
-│   ├── Auth.tsx              → Écran de connexion
-│   ├── ProjectList.tsx       → Liste des projets
-│   ├── CreateProject.tsx     → Formulaire création (4 étapes)
-│   └── ProjectResults.tsx    → Affichage résultats (à compléter)
-└── lib/
-    ├── supabase.ts           → Client Supabase
-    └── database.types.ts     → Types TypeScript auto-générés
-
-supabase/migrations/
-└── 20251110224049_create_simple_sci_schema.sql  → Schéma DB
+VITE_API_URL=http://localhost:5010
 ```
 
----
+## Tests rapides
 
-## 🚀 Pour Aller Plus Loin
+```bash
+curl http://localhost:5010/api/health     # API up ?
+curl -X POST http://localhost:5010/api/analyze \
+  -H 'Content-Type: application/json' \
+  -d '{"nom_sci":"Test","capital":1000,"appartements":[]}'
+```
 
-### Option 1: Edge Function Complète
-- Intégration avec le backend Python existant
-- Calculs côté serveur
-- Export Excel automatique
+Depuis le frontend, cliquer sur **Nouveau projet**, remplir le formulaire puis valider pour vérifier la communication API ↔ UI.
 
-### Option 2: API REST Python
-- Déployer le backend Python séparément
-- Appeler l'API depuis le frontend
-- Plus flexible mais plus complexe
+## Structure recommandée pour de nouveaux développements
 
----
-
-**Status**: ✅ Base fonctionnelle | 🔄 Calculs Python à connecter
+* Ajouter les règles de calcul dans `backend/sci_analyser.py` (et tests manuels via `generate_report.py`).
+* Étendre l'API dans `backend/web_app.py` (nouvel endpoint → ajouter sérialisation et tests curl).
+* Mettre à jour les composants React dans `frontend/src/components/` et ajuster le style via `index.css`.
+* Actualiser la documentation si de nouveaux champs sont introduits (README, GUIDE_UTILISATEUR, etc.).
