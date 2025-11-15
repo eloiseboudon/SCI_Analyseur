@@ -22,7 +22,7 @@ backend/data/*.db
 backend/data/*.db-journal
 backend/data/*.db-wal
 backend/data/*.db-shm
-backend/sci_projects.db
+backend/*.db
 
 # Rapports générés
 backend/reports/*.xlsx
