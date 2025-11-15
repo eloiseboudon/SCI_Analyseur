@@ -237,13 +237,13 @@ export function DonutChart({ data, centerText, centerValue }: DonutChartProps) {
 
     // Center text
     if (centerText) {
-      ctx.fillStyle = '#0f172a';
+      ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 24px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(centerValue || '', centerX, centerY - 10);
 
-      ctx.fillStyle = '#64748b';
+      ctx.fillStyle = '#ffffff';
       ctx.font = '12px Inter, sans-serif';
       ctx.fillText(centerText, centerX, centerY + 15);
     }
