@@ -10,7 +10,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DarkResultsTabs } from './components/DarkResultsTabs';
 import { SCIForm } from './components/SCIForm';
 
@@ -73,6 +73,7 @@ export default function App() {
   const [listError, setListError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [formErrorDetails, setFormErrorDetails] = useState<string[]>([]);
   const [formLoading, setFormLoading] = useState(false);
   const [results, setResults] = useState<any | null>(null);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
@@ -82,6 +83,7 @@ export default function App() {
   const [projectAction, setProjectAction] = useState<{ id: string; type: 'view' | 'edit' | 'delete' } | null>(null);
   const [downloadingProjectId, setDownloadingProjectId] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
+  const formErrorRef = useRef<HTMLDivElement | null>(null);
 
   const fetchProjects = useCallback(async () => {
     setProjectsLoading(true);
@@ -130,12 +132,12 @@ export default function App() {
     setFormInitialAppartements(undefined);
     setFormInitialRevenus(undefined);
     setFormError(null);
+    setFormErrorDetails([]);
     setView('form');
   };
 
   const handleSubmitProject = async (payload: any) => {
     setFormLoading(true);
-    setFormError(null);
     try {
       const method = editingProjectId ? 'PUT' : 'POST';
       const url = editingProjectId
@@ -152,16 +154,47 @@ export default function App() {
 
       const body = await response.json();
       if (!response.ok || body.success === false) {
-        throw new Error(body.error || 'Impossible de sauvegarder le projet');
+        const message = body.error || 'Impossible de sauvegarder le projet';
+        const details = Array.isArray(body.details)
+          ? body.details
+              .map((detail: any) => {
+                if (!detail) {
+                  return null;
+                }
+
+                const path = Array.isArray(detail.loc)
+                  ? detail.loc.join(' → ')
+                  : detail.loc;
+                const description = detail.msg || detail.message;
+
+                if (!path && !description) {
+                  return null;
+                }
+
+                if (path && description) {
+                  return `${path}: ${description}`;
+                }
+
+                return path || description || null;
+              })
+              .filter((detail: string | null): detail is string => Boolean(detail))
+          : [];
+
+        setFormError(message);
+        setFormErrorDetails(details);
+        return;
       }
 
       const projectId = body.project_id || body.project?.id || editingProjectId;
       setResults({ ...body, id: projectId, project_id: projectId, apiBaseUrl: baseUrl });
       setEditingProjectId(projectId || null);
       setView('results');
+      setFormError(null);
+      setFormErrorDetails([]);
       await fetchProjects();
     } catch (error: any) {
       setFormError(error.message || 'Erreur lors de la sauvegarde du projet');
+      setFormErrorDetails([]);
     } finally {
       setFormLoading(false);
     }
@@ -436,8 +469,18 @@ export default function App() {
     </div>
   );
 
+  useEffect(() => {
+    if (!formError && formErrorDetails.length === 0) {
+      return;
+    }
+
+    if (formErrorRef.current) {
+      formErrorRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [formError, formErrorDetails]);
+
   const renderForm = () => (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-xl font-semibold text-slate-100">
@@ -456,8 +499,19 @@ export default function App() {
       </div>
 
       {formError && (
-        <div className="border border-red-500/40 bg-red-900/40 text-red-100 px-4 py-3 rounded-lg">
-          {formError}
+        <div
+          ref={formErrorRef}
+          role="alert"
+          className="sticky top-4 z-30 border border-red-500/50 bg-red-900/70 backdrop-blur px-4 py-3 rounded-lg space-y-2 shadow-lg shadow-red-900/30"
+        >
+          <p>{formError}</p>
+          {formErrorDetails.length > 0 && (
+            <ul className="list-disc list-inside text-sm space-y-1 max-h-48 overflow-y-auto pr-1">
+              {formErrorDetails.map((detail, index) => (
+                <li key={index}>{detail}</li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
